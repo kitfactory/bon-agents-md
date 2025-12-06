@@ -6,6 +6,8 @@
 - 対応プログラミング言語: Python / JavaScript / TypeScript / Rust（未指定時は Python）。
 - ターミナル言語に応じて AGENTS.md を日/英で生成。判定不可時は英語。
 - 生成する AGENTS.md はプロジェクト固有情報を直接書かず、`docs/` 配下（concept/spec/architecture など）を読むようガイドする共通テンプレートとする。
+- 出力ファイル名はエディタに合わせる: codex/claudecode は `AGENTS.md`、cursor は `.cursorrules`、copilot は `copilot-instructions.md`。
+- `docs/` に concept/spec/architecture が無い場合は作成を推奨し、`docs/plan.md` のチェックリストを使って進めるようテンプレートで案内する。
 
 ## 言語・エディタ判定
 - 言語優先順位: ユーザー入力 `--lang` > `LANG`/`LC_ALL` > OS 推定。WSL の場合は Windows 側の言語設定を優先して推定。

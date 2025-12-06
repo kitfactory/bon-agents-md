@@ -13,7 +13,7 @@
     "LICENSE"
   ],
   "scripts": {
-    "test": "node ./bin/bon.js --help"
+    "test": "node tests/run.js"
   },
   "engines": {
     "node": ">=16"

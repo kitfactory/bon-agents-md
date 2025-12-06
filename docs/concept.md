@@ -12,6 +12,8 @@ bon-agents-md は、AI エディタが安全かつ効率的に作業できる環
 - プログラミング言語が無指定のときは Python を前提に、ターミナルの言語が推定できない場合は英語で生成する。
 - 言語判定の優先順位：ユーザー指定 > `LANG`/`LC_ALL` > OS 推定。WSL の場合は Windows 側の言語設定を優先して推定する。
 - 生成する AGENTS.md はプロジェクト固有の情報を直接書かず、必ず `docs/` 配下のドキュメント（concept/spec/architecture など）を参照してプロジェクトを把握するようガイドする。共通テンプレートとして使い回せるようにする。
+- エディタに応じて出力ファイル名を変える: codex/claudecode は `AGENTS.md`、cursor は `.cursorrules`、copilot は `copilot-instructions.md`。
+- `docs/` に concept/spec/architecture が無い場合は作成を促す文面をテンプレートに含め、作業手順として `docs/plan.md` のチェックリストを利用するよう案内する。
 
 この仕組みにより、チームやプロジェクトごとのガイドライン・ツールチェーン・安全対策を素早く共有し、AI エディタが誤操作を避けながら高品質な支援を行えるようになります。
 

@@ -9,6 +9,8 @@
 - ロケール判定: ユーザー指定 > `LANG`/`LC_ALL` > OS 推定。WSL では Windows 側言語を優先。判定不可は英語。
 - `.env.sample` は生成しない。AGENTS.md に環境変数・`.env` の設定例と利用箇所を明示する。
 - AGENTS.md 自体にはプロジェクト固有情報を直接持たせず、`docs/`（concept/spec/architecture など）を参照してプロジェクトを把握するよう誘導する共通テンプレートとする。
+- 出力ファイル名はエディタに合わせる: codex/claudecode は `AGENTS.md`、cursor は `.cursorrules`、copilot は `copilot-instructions.md`。
+- `docs/` に concept/spec/architecture が無い場合に作成を促し、`docs/plan.md` のチェックリストを活用するようテンプレートで案内する。
 
 ## レイヤー構成
 
@@ -32,7 +34,7 @@
 
 ### 4) 出力層（ファイル I/O）
 - 入力: 生成文字列、`--dir`、`--force`。
-- 責務: ディレクトリ作成、既存 AGENTS.md の存在確認、`--force` に応じた上書き、ファイル書き出し。
+- 責務: ディレクトリ作成、既存ファイルの存在確認（エディタに応じたファイル名）、`--force` に応じた上書き、ファイル書き出し。
 - 抽象境界: `FileWriter` として fs への依存を隔離し、テストでモック/スタブを差し替えられるようにする。
 
 ### 5) ロギング/エラーハンドリング
