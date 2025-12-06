@@ -1,0 +1,22 @@
+# bon-agents-md 実施計画（チェックリスト）
+
+- [ ] CLI 拡張仕様の実装
+  - [ ] `--lang` / `--editor` オプション追加（Python/JS/TS/Rust、codex/cursor/claudecode/copilot、デフォルト: Python/codex）
+  - [ ] ロケール判定ロジック（ユーザー指定 > LANG/LC_ALL > OS 推定、WSL は Windows 側優先、判定不可は英語）
+- [ ] テンプレート生成の拡張
+  - [ ] 言語別テンプレート（Python: uv+.venv/pytest/ruff 等、JS: pnpm+Vitest+ESLint/Prettier、TS: tsc --noEmit、Rust: cargo fmt/clippy/test）
+  - [ ] ロケール別文面（日/英）、エディタ別の案内差分
+  - [ ] AGENTS.md で `.env`/環境変数の必要キーと利用箇所を指示（`.env.sample` は生成しない）
+  - [ ] プロジェクト固有情報は書かず、`docs/`（concept/spec/architecture など）を参照させる文言を含める
+  - [ ] 必須観点（要件定義、前提/条件/振る舞い or Given/When/Then、設計指針、テスト方針）を盛り込む
+- [ ] I/O と上書き制御
+  - [ ] `AGENTS.md` 生成・既存チェック・`--force` 上書き
+  - [ ] `--dir` での再帰ディレクトリ作成
+- [ ] テスト作成（tests/）
+  - [ ] CLI オプション/ヘルプ/バージョンのテスト
+  - [ ] ロケール切替（日/英）と言語/エディタ組み合わせでのテンプレート差分テスト
+  - [ ] 上書き防止と `--force` の挙動テスト
+  - [ ] `.env` 指示文面とドキュメント参照文面の確認
+- [ ] ドキュメント更新
+  - [ ] README に使用例とオプション追記
+  - [ ] concept/spec/architecture と実装差分の最終確認
