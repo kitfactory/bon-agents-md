@@ -8,6 +8,7 @@
 - 対応言語: Python / JavaScript / TypeScript / Rust（未指定は Python）。
 - ロケール判定: ユーザー指定 > `LANG`/`LC_ALL` > OS 推定。WSL では Windows 側言語を優先。判定不可は英語。
 - `.env.sample` は生成しない。AGENTS.md に環境変数・`.env` の設定例と利用箇所を明示する。
+- AGENTS.md が日本語の場合は concept/spec/architecture/plan を日本語で作成し、ソースコードのコメントは日本語と英語を併記するルールをテンプレートに含める。
 - AGENTS.md 自体にはプロジェクト固有情報を直接持たせず、`docs/`（concept/spec/architecture など）を参照してプロジェクトを把握するよう誘導する共通テンプレートとする。
 - 出力ファイル名はエディタに合わせる: codex/claudecode は `AGENTS.md`、cursor は `.cursorrules`、copilot は `copilot-instructions.md`。
 - `docs/` に concept/spec/architecture が無い場合に作成を促し、`docs/plan.md` のチェックリストを活用するようテンプレートで案内する。
@@ -30,6 +31,7 @@
 ### 3) テンプレート選択/構成層
 - 入力: 言語、エディタ、ロケール。
 - 責務: 言語別（Python/JS/TS/Rust）× ロケール別（日/英）テンプレートスニペットの組み立て。共通パート（要件定義、仕様記法、設計指針、テスト方針、環境変数指示）を注入。
+- 追加要件: 日本語ロケールではドキュメント/コメント運用ルール（concept 機能表・フェーズ整理、spec の章立てと番号付け、コメント日英併記）を必ず含める。
 - 抽象境界: `TemplateProvider`（データ）、`TemplateRenderer`（文字列化）。データとレンダリングを分離し、ユニットテストで差し替え可能にする。
 
 ### 4) 出力層（ファイル I/O）
@@ -40,6 +42,57 @@
 ### 5) ロギング/エラーハンドリング
 - 責務: ユーザー向けに簡潔なログを出す。失敗時は原因を明示し終了コードを 1 にする。
 - デバッグ補助: テスト難航時に段階的メッセージを追加できるよう、ログユーティリティを薄く用意する（標準出力/標準エラーのどちらに出すかを明確化）。
+
+## 主要インターフェース例（I/F の明確化）
+
+```ts
+// コンテキスト判定
+interface LocaleDetector {
+  detect(env: NodeJS.ProcessEnv, platform: NodeJS.Platform, release: string): 'ja' | 'en';
+}
+interface LanguageSelector {
+  normalize(langInput: string | undefined): 'python' | 'js' | 'ts' | 'rust';
+}
+interface EditorSelector {
+  normalize(editorInput: string | undefined): 'codex' | 'cursor' | 'claudecode' | 'copilot';
+}
+
+// テンプレート
+interface TemplateProvider {
+  getSections(language: string, locale: 'ja' | 'en', editor: string): TemplateSections;
+}
+interface TemplateRenderer {
+  render(sections: TemplateSections): string;
+}
+
+// 出力
+interface FileWriter {
+  ensureDir(path: string): void;
+  exists(path: string): boolean;
+  write(path: string, content: string, options: { force: boolean }): void;
+}
+
+type TemplateSections = {
+  intro: string;
+  docDiscipline: string | null; // 日本語ロケール時は必須
+  requirements: string;
+  specs: string;
+  design: string;
+  testing: string;
+  languageGuidance: string;
+  editorGuidance: string;
+  workflow: string;
+};
+```
+
+> 注意（必ず遵守）: ゴッド API/データを作らない。API は役割ごとに最小粒度で分割し、引数も最小限にする。データ型も必要最小限の属性のみに絞り、汎用マップ（なんでも入るオブジェクト）や万能メソッド化を避けること。
+
+## 主要データ型と属性
+- CLI/引数: `dir: string`, `force: boolean`, `lang: 'python' | 'js' | 'ts' | 'rust'`, `editor: 'codex' | 'cursor' | 'claudecode' | 'copilot'`, `locale: 'ja' | 'en'`, `fileName: string`
+- 環境: `env: NodeJS.ProcessEnv`, `platform: NodeJS.Platform`, `release: string`（WSL 判定用）、`windowsLocale?: string | null`
+- テンプレート入力/出力: `TemplateSections`（上記 I/F 例参照）
+- ファイル I/O: `targetDir: string`, `targetPath: string`, `content: string`, `options: { force: boolean }`
+- ロケール/エディタ/言語判定: 正規化済みの `language`/`editor`/`locale` を返し、サポート外はエラーとする
 
 ## AGENTS.md に含める内容（生成テンプレートの骨子）
 - 要件定義: 想定ユーザー、困りごと、ユースケース、機能一覧、使用ライブラリ、全体設計。
@@ -57,6 +110,11 @@
 ## コンポーネントと依存関係
 - `bin/bon.js`（エントリーポイント） → CLI パーサ → コンテキスト判定（ロケール/言語/エディタ） → テンプレート構成/レンダリング → ファイル出力。
 - 依存は単方向（上位レイヤーが下位の抽象インターフェースに依存）。実装はインジェクション可能にし、ユニットテストでモックを差し替える。
+
+## フェーズ別適用
+- フェーズ1 (MVP): CLI/ロケール判定とテンプレート骨子（要件定義〜作業の進め方）、ファイル出力/上書き制御を実装する。
+- フェーズ2 (運用強化): テンプレートにドキュメント/コメント運用ルールを追加し、言語・エディタ別ガイダンスを充実させる。
+- フェーズ3 (拡張): 言語追加やテンプレート差分、テスト強化（実ファイル生成確認など）を拡張ポイントとして順次取り込む。
 
 ## テスト戦略
 - 単体テスト: CLI パーサ、ロケール/言語/エディタ判定、テンプレート組み立て、ファイル出力のエラーパス（上書き禁止など）。

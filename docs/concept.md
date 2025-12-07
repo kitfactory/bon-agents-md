@@ -1,21 +1,22 @@
 # bon-agents-md コンセプト
 
-bon-agents-md は、AI エディタが安全かつ効率的に作業できる環境を素早く用意するための CLI です。`bon` コマンドひとつで、プロジェクトに最適化された AGENTS.md を生成します。
+bon-agents-md は、AI エディタが安全かつ効率的に作業できる環境を素早く用意するための CLI です。`bon` コマンドひとつで、プロジェクトに最適化された AGENTS.md を生成し、ドキュメントとコメントの運用ルールも明示します。
 
-- AI エディタ用の必須コンテキストをまとめた AGENTS.md を自動生成し、初期セットアップの手間を削減する。
-- ターミナルの言語設定を検知し、日本語・英語いずれかで AGENTS.md を生成する（判定不可の場合は英語）。
-- 指定されたプログラミング言語に合わせて、適切な構成・内容の AGENTS.md を作成する（Python / JavaScript / TypeScript / Rust に対応）。
-- Python を指定された場合は、`uv` + `.venv` 仮想環境、pytest、Lint などの推奨セットアップを案内するテンプレートを作成する。
-- JavaScript / TypeScript を指定された場合は、Node.js + `pnpm`/`npm`、型チェック（TS）、テストランナー（Vitest/Jest など）、Lint/Format（ESLint/Prettier）を推奨。
-- Rust を指定された場合は、`cargo` ワークスペース、`cargo fmt` / `cargo clippy` / `cargo test` の導線を含める。
-- 対応 AI エディタは codex / cursor / claudecode / copilot。指定がない場合は codex 向けの AGENTS.md を作成する。
-- プログラミング言語が無指定のときは Python を前提に、ターミナルの言語が推定できない場合は英語で生成する。
-- 言語判定の優先順位：ユーザー指定 > `LANG`/`LC_ALL` > OS 推定。WSL の場合は Windows 側の言語設定を優先して推定する。
-- 生成する AGENTS.md はプロジェクト固有の情報を直接書かず、必ず `docs/` 配下のドキュメント（concept/spec/architecture など）を参照してプロジェクトを把握するようガイドする。共通テンプレートとして使い回せるようにする。
-- エディタに応じて出力ファイル名を変える: codex/claudecode は `AGENTS.md`、cursor は `.cursorrules`、copilot は `copilot-instructions.md`。
-- `docs/` に concept/spec/architecture が無い場合は作成を促す文面をテンプレートに含め、作業手順として `docs/plan.md` のチェックリストを利用するよう案内する。
+## 機能一覧とフェーズ（Spec ID 付き）
 
-この仕組みにより、チームやプロジェクトごとのガイドライン・ツールチェーン・安全対策を素早く共有し、AI エディタが誤操作を避けながら高品質な支援を行えるようになります。
+| Spec ID | 機能 | 詳細説明 | フェーズ | 依存関係 |
+| --- | --- | --- | --- | --- |
+| F1 | CLI/ロケール判定 | `--dir`/`--force`/`--lang`/`--editor`/`--help`/`--version` を扱い、`LANG`/`LC_ALL`/OS から日本語・英語を自動判定（WSL は Windows 言語優先）。 | フェーズ1 (MVP) | なし |
+| F2 | テンプレート生成とファイル出力 | プロジェクト固有情報を含めず、`docs/` を参照する共通テンプレートを生成。エディタ別の出力ファイル名 (`AGENTS.md`/`.cursorrules`/`copilot-instructions.md`) を採用し、`.env.sample` は作成しない。 | フェーズ1 (MVP) | F1 |
+| F3 | ドキュメント/コメント運用ルール | AGENTS.md が日本語の場合は concept/spec/architecture/plan を日本語で書き、コードコメントは日英併記。concept は機能表＋詳細説明と MVP/依存関係を明確化し、フェーズ単位で spec/architecture/plan を整備する。spec は機能グループごとに章を分け、番号付きの前提/条件/振る舞い（Given/When/Then）形式で記述する。 | フェーズ2 (運用強化) | F2 |
+| F4 | 言語・エディタ別ガイダンス | Python/JS/TS/Rust ごとに推奨ツールチェーンと環境変数の扱いを提示し、codex/cursor/claudecode/copilot での利用を想定した文面を出力する。 | フェーズ2 (運用強化) | F1, F2 |
+| F5 | 拡張性とテスト強化 | 言語追加やテンプレート差分拡張、実ファイル生成を伴うテスト強化を段階的に行う。 | フェーズ3 (拡張) | F1–F4 |
+
+## フェーズの狙い
+
+- フェーズ1 (MVP): CLI オプション、ロケール判定、テンプレート生成/出力の基本導線を確立し、`.env.sample` を生成しないポリシーを守る。
+- フェーズ2 (運用強化): ドキュメント/コメント運用ルールをテンプレートに明示し、concept/spec/architecture/plan をフェーズ単位で作れるようガイドする。言語・エディタ別の文面を充実させる。
+- フェーズ3 (拡張): 言語・エディタ追加やテスト/開発体験の改善を進める。各フェーズに合わせて spec/architecture/plan も更新する。
 
 ## AGENTS.md が必ず含む観点
 
@@ -23,10 +24,18 @@ bon-agents-md は、AI エディタが安全かつ効率的に作業できる環
 - 仕様書/要求仕様：英語は Given/When/Then、日本語は 前提/条件/振る舞い で記述。
 - 設計：レイヤー構造と単一責務を守り、抽象クラスを用いて DI しやすい設計とする。ゴッドクラスや雑多なヘルパー関数は避け、シンプルなインターフェースを提供する。
 - テスト方針：機能・レイヤー単位で完了させる。モックは補助であり、実通信・実接続まで動作したときに機能完了とみなす。必要な環境変数や接続情報、`.env` を含む秘密情報の取得・読み込み手順（例: `.env` の設置場所、環境変数を使うコードパス、設定例）を AGENTS.md に明示する。`.env.sample` の自動生成は行わず、ユーザーに必要なキーと設定例を示す。テスト修正が難航する場合は各ステップでデバッグメッセージを追加して原因を特定する。
+- ドキュメント運用：AGENTS.md が日本語の場合、concept/spec/architecture/plan は必ず日本語で記載し、ソースコードのコメントは日英併記とする。concept は機能表とフェーズ整理、spec は章立て＋番号付き前提/条件/振る舞いを徹底する。
+
+## 非機能・運用ポリシー
+- 性能: CLI 実行は対話レスポンスを阻害しない短時間（サブ秒〜数秒）で完了する。
+- UX/メッセージ: CLI はユーザーが次に取るべき行動が分かるメッセージを出す（例: `--force` を促す、サポート言語を列挙する）。
+- 国際化: ロケール判定結果に応じて日本語/英語でテンプレートを生成し、判定不可は英語フォールバック。
+- 例外/エラー処理: ライブラリとしては例外送出で呼び出し側がハンドリングできるようにし、アプリ/CLI としては終了コードとメッセージで指示を返す。
+- ログ/運用: ログは簡潔にし、ユーザー向けの標準出力/エラーの使い分けを明確にする。
 
 ## 言語別テンプレートの要点
 
 - Python: `uv` + `.venv` 仮想環境、`pytest`、Lint/Format（`ruff`/`black` など）、環境変数例の提示。
 - JavaScript: Node.js + `pnpm`/`npm`、テスト（Vitest/Jest）、Lint/Format（ESLint/Prettier）。`.env` の必要キーと利用箇所を AGENTS.md で指示し、サンプルファイルは生成しない。
 - TypeScript: 上記 JS に加えて型チェック（`tsc --noEmit`）と型境界の設計指針。
-- Rust: `cargo` ワークスペース推奨、`cargo fmt` / `cargo clippy` / `cargo test`、feature flag の設計指針と実機テストの導線。
+- Rust: `cargo` ワークスペース推奨、`cargo fmt` / `cargo clippy` / `cargo test` の導線を含める。

@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 
 /**
- * bon CLI
+ * bon CLI / bon CLI
  * Creates an AGENTS.md file in the specified directory with a ready-to-edit template.
+ * 指定ディレクトリに編集可能な AGENTS.md テンプレートを生成する。
  */
 const fs = require('fs');
 const path = require('path');
@@ -138,6 +139,7 @@ function isWsl(platform = os.platform(), release = os.release(), env = process.e
 
 function readWindowsLocale() {
   // Best-effort: try PowerShell first, then cmd. Fail quietly if unavailable.
+  // ベストエフォートで PowerShell → cmd を試し、失敗時は静かにスキップする。
   try {
     const ps = spawnSync('powershell.exe', ['-NoLogo', '-NoProfile', '-Command', '[culture]::CurrentUICulture.Name'], {
       encoding: 'utf8',
@@ -147,7 +149,7 @@ function readWindowsLocale() {
       return ps.stdout.trim();
     }
   } catch (error) {
-    // ignore
+    // ignore / 失敗時は無視する
   }
 
   try {
@@ -156,7 +158,7 @@ function readWindowsLocale() {
       return cmd.stdout.trim();
     }
   } catch (error) {
-    // ignore
+    // ignore / 失敗時は無視する
   }
 
   return null;
@@ -301,6 +303,26 @@ function createTemplate({ projectName, language, editor, locale }) {
           'Always read the docs first and avoid placing secrets in this file.'
         ].join('\n');
 
+  const docDiscipline =
+    locale === 'ja'
+      ? [
+          '## ドキュメント/コメント作成ルール',
+          '- AGENTS.md が日本語の場合、`docs/concept.md` / `docs/spec.md` / `docs/architecture.md` / `docs/plan.md` は必ず日本語で作成する。',
+          '- AGENTS.md が日本語の場合、ソースコードのコメントは日本語と英語を併記する。',
+          '- concept: 機能一覧を表にまとめ、各機能の詳細と依存関係、MVP とフェーズ分けを明確にする（フェーズ単位で spec/architecture/plan を用意）。機能行には Spec ID を付与し、spec 側で同じ ID を引用できるようにする。concept 作成時点で必ずユーザーと合意し、更新時も確認を徹底する。',
+          '- spec: concept の機能グループごとに章を分け、各仕様に番号を振って 前提/条件/振る舞い（Given/When/Then）形式で記載する。仕様タイトルは「4.1. --dir を指定した場合、ディレクトリを再帰的に作成する」のように、何をしたときにどう振る舞うかを明記し、対応する Spec ID を併記する。入力バリデーションやエラー時の振る舞いも番号付きで整理し、エラー/メッセージは専用の一覧表で管理する。',
+          '- architecture: レイヤー責務と依存方向を示し、主要インターフェース（I/F）を関数シグネチャ等で明文化する。API は最小粒度・最小引数、データ属性は必要最小限にし、ゴッド API/データを禁止する。非機能は AI 生成で過剰に固定しないが、ログ/エラー方針（例: `[bon][E1] ...`）は明示する。',
+          '- サンプル/スニペット: AGENTS.md に最低限の例を含める（正常系と失敗例を 1 行ずつ。例: 成功 `bon --dir ./project --lang ts --editor cursor` → `.cursorrules`、失敗 `bon --editor unknown` → `[bon][E2] Unsupported editor: ...`）。サンプルのメッセージには必ず Error ID を入れ、実装が返す文言と完全一致させる。'
+        ].join('\n')
+      : [
+          '## Documentation / Comment Rules',
+          '- If AGENTS.md is in English, you may still keep docs in English, but keep the same structure as Japanese: `docs/concept.md`, `docs/spec.md`, `docs/architecture.md`, `docs/plan.md` should follow the guidance below.',
+          '- concept: Provide a table of features with detailed descriptions, dependencies, and MVP vs phase breakdowns (spec/architecture/plan per phase). Add a Spec ID column so specs can reference the same IDs. Secure user agreement at concept creation time and on updates.',
+          '- spec: Split chapters by feature groups; number each spec and write in Given/When/Then. The spec title should state the action and behavior, e.g., "4.1. When --dir is set, create directories recursively," and include the corresponding Spec ID. Document input validation and error behaviors with numbered specs, and manage errors/messages in a dedicated list/table.',
+          '- architecture: Clarify layer responsibilities and dependencies, and spell out key interfaces (I/F) with function signatures or similar detail. Keep APIs minimal (smallest responsibility, minimal arguments) and data models lean (only required attributes); avoid god APIs/data. Do not over-constrain non-functional metrics up front, but do fix logging/error conventions (e.g., `[bon][E1] ...`).',
+          '- Samples/Snippets: Include minimal examples in AGENTS.md (one success and one failure). Example success: `bon --dir ./project --lang ts --editor cursor` → `.cursorrules`; example failure: `bon --editor unknown` → `[bon][E2] Unsupported editor: ...`; list main template section headings. Always include Error IDs in messages and keep them exactly matching the implementation.'
+        ].join('\n');
+
   const requirements =
     locale === 'ja'
       ? [
@@ -388,24 +410,13 @@ function createTemplate({ projectName, language, editor, locale }) {
           '- Do not place secrets here; use env vars instead'
         ].join('\n');
 
-  return [
-    heading,
-    intro,
-    '',
-    requirements,
-    '',
-    specSection,
-    '',
-    design,
-    '',
-    testing,
-    '',
-    languageSection,
-    '',
-    editorSection,
-    '',
-    workSection
-  ].join('\n');
+  const sections = [heading, intro];
+  if (docDiscipline) {
+    sections.push('', docDiscipline);
+  }
+  sections.push('', requirements, '', specSection, '', design, '', testing, '', languageSection, '', editorSection, '', workSection);
+
+  return sections.join('\n');
 }
 
 function main() {

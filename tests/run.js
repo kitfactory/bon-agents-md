@@ -57,6 +57,24 @@ test('createTemplate Japanese markers', () => {
   assert.ok(tpl.includes('前提') || tpl.includes('仕様記述'), 'Japanese template should include Japanese sections');
 });
 
+test('createTemplate Japanese doc and comment rules', () => {
+  const tpl = bon.createTemplate({ projectName: 'demo', language: 'python', editor: 'codex', locale: 'ja' });
+  assert.ok(tpl.includes('ドキュメント/コメント作成ルール'), 'Should instruct on doc/comment rules in Japanese template');
+  assert.ok(tpl.includes('日本語と英語を併記'), 'Should require bilingual comments when AGENTS is Japanese');
+  assert.ok(tpl.includes('仕様タイトルは'), 'Should explain how to title specs with action/behavior wording');
+  assert.ok(tpl.includes('ゴッド'), 'Should warn against god APIs/data in Japanese template');
+  assert.ok(tpl.includes('サンプル/スニペット'), 'Should request samples/snippets in Japanese template');
+});
+
+test('createTemplate English doc rules include concept/spec guidance', () => {
+  const tpl = bon.createTemplate({ projectName: 'demo', language: 'ts', editor: 'codex', locale: 'en' });
+  assert.ok(tpl.includes('Documentation / Comment Rules'), 'Should include doc rules section in English template');
+  assert.ok(tpl.toLowerCase().includes('table of features'), 'Concept guidance should mention feature table');
+  assert.ok(tpl.toLowerCase().includes('spec title should'), 'Spec title guidance should be present');
+  assert.ok(tpl.toLowerCase().includes('interfaces'), 'Architecture guidance should mention interfaces in English template');
+  assert.ok(tpl.toLowerCase().includes('samples/snippets'), 'English template should request samples/snippets');
+});
+
 test('isWsl detects microsoft release', () => {
   const result = bon.isWsl('linux', '5.15.90-microsoft-standard-WSL2', {});
   assert.strictEqual(result, true);

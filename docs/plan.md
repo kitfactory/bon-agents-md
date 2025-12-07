@@ -1,22 +1,19 @@
-# bon-agents-md 実施計画（チェックリスト）
+# bon-agents-md 実施計画（フェーズ別）
 
-- [x] CLI 拡張仕様の実装
-  - [x] `--lang` / `--editor` オプション追加（Python/JS/TS/Rust、codex/cursor/claudecode/copilot、デフォルト: Python/codex）
-  - [x] ロケール判定ロジック（ユーザー指定 > LANG/LC_ALL > OS 推定、WSL は Windows 側優先、判定不可は英語）
-- [x] テンプレート生成の拡張
-  - [x] 言語別テンプレート（Python: uv+.venv/pytest/ruff 等、JS: pnpm+Vitest+ESLint/Prettier、TS: tsc --noEmit、Rust: cargo fmt/clippy/test）
-  - [x] ロケール別文面（日/英）、エディタ別の案内差分
-  - [x] AGENTS.md で `.env`/環境変数の必要キーと利用箇所を指示（`.env.sample` は生成しない）
-  - [x] プロジェクト固有情報は書かず、`docs/`（concept/spec/architecture など）を参照させる文言を含める
-  - [x] 必須観点（要件定義、前提/条件/振る舞い or Given/When/Then、設計指針、テスト方針）を盛り込む
-- [x] I/O と上書き制御
-  - [x] `AGENTS.md` 生成・既存チェック・`--force` 上書き
-  - [x] `--dir` での再帰ディレクトリ作成
-- [x] テスト作成（tests/）
-  - [x] CLI オプション/ヘルプ/バージョンのテスト
-  - [x] ロケール切替（日/英）と言語/エディタ組み合わせでのテンプレート差分テスト
-  - [x] 上書き防止と `--force` の挙動テスト
-  - [x] `.env` 指示文面とドキュメント参照文面の確認
-- [x] ドキュメント更新
-  - [x] README に使用例とオプション追記
-  - [x] concept/spec/architecture と実装差分の最終確認
+## フェーズ1 (MVP: CLI とテンプレート基盤)
+- [x] CLI オプション実装（`--dir`/`--force`/`--lang`/`--editor`/`--help`/`--version`）と入力バリデーション。
+- [x] ロケール判定ロジック（環境変数優先、WSL では Windows 言語優先、判定不可は英語フォールバック）。
+- [x] テンプレート骨子の構成（要件定義・仕様記述指針・設計指針・テスト方針・言語別/エディタ別案内・作業手順）。
+- [x] ファイル I/O と上書き制御（`--dir` でのディレクトリ作成、既存ファイルの上書き防止、`--force` 時のみ上書き）。
+
+## フェーズ2 (運用強化: ドキュメント/コメントルール)
+- [x] 日本語テンプレートにドキュメント/コメント運用ルールを追加（concept/spec/architecture/plan は日本語、コメントは日英併記）。
+- [x] concept の指針（機能表＋詳細、MVP/依存関係とフェーズ整理、フェーズ単位で spec/architecture/plan を作成）。
+- [x] spec の指針（機能グループごとの章立て、番号付きの前提/条件/振る舞い＝Given/When/Then）。
+- [x] テストを追加し、日本語テンプレートに運用ルールが含まれることを確認。
+- [x] ドキュメント（concept/spec/architecture/plan）を上記ルールに沿って更新。
+
+## フェーズ3 (拡張)
+- [ ] 言語追加やテンプレート差分拡張（エディタ固有の指針やライブラリ選定の詳細化）。
+- [ ] 実ファイル生成を伴うテストやスナップショット検証の強化。
+- [ ] DX 改善（エラーメッセージの国際化、ロギング強化、CI での自動検証）。
