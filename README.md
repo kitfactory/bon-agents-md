@@ -1,16 +1,26 @@
 # bon-agents-md ⚡️
 
-`bon` creates an AGENTS.md-style guide for AI assistants in one command. The template is intentionally lightweight, points to your `docs/` folder for project-specific details, and encodes how to write concept/spec/architecture/plan so AI outputs stay aligned—without over-generating or baking in project-specific info. Use it to start fast, keep humans in the loop, and avoid “AI slop.” One command, and the lane markers for the whole project light up. 🚦
+`bon-agents-md` is a **one-command tool** to generate AI assistant guides (AGENTS.md, etc.).
+
+- Auto-generates guides per editor (Codex CLI / Cursor / Claude Code / Copilot)
+- Keeps concept / spec / architecture / plan **linked by Spec IDs**
+- Separates project-specific details into `docs/` to reduce AI misreads/misgeneration
+
+Use it as a **starter kit** when you want a fast design guide for AI, and to cut spec drift and rework.
+
+---
 
 ## Why bon? 🌈
 
-| You want… | bon gives you… |
+| You want | bon gives you |
 | --- | --- |
-| High-quality concept/spec/architecture/plan | Guardrails to write them consistently and keep them linked by Spec IDs |
-| Specs that are unambiguous | Given/When/Then with Spec IDs in headings and numbered error behaviors |
-| Architecture with AI-ready know-how | Layer responsibilities + key interfaces + “no god APIs/data” baked in |
-| Fast examples to anchor outputs | Success/failure snippets with Error IDs that match real messages |
-| Editor-friendly outputs | Auto-picks `AGENTS.md` / `.cursorrules` / `copilot-instructions.md` for codex/cursor/claudecode/copilot |
+| High-quality concept/spec/architecture/plan templates | Spec-ID-linked guardrails with clear approval points |
+| Unambiguous specs | Headings with Spec IDs + numbered Given / When / Then and error behaviors |
+| AI-ready architecture know-how | Layer responsibilities + key interfaces, with “no god API/data” baked in |
+| Quick, crystal-clear samples | One-line success/failure examples with Error IDs matching implementation messages |
+| Multi-editor outputs | Automatically picks `AGENTS.md` / `.cursorrules` / `copilot-instructions.md` for codex/cursor/claudecode/copilot |
+
+---
 
 ## Install
 
@@ -18,48 +28,73 @@
 npm install -g bon-agents-md
 ```
 
-Requires Node.js 16+.
+Requires Node.js 16+
 
-## Quick start
+---
+
+## Usage
 
 ```bash
-bon                    # create AGENTS.md (locale auto-detected)
-bon --dir path/to      # choose target directory (creates it)
-bon --force            # overwrite if it exists
-bon --lang ts          # language guidance: python|js|ts|rust (default: python)
-bon --editor cursor    # editor target: codex|cursor|claudecode|copilot (default: codex)
-bon --help             # usage
-bon --version          # show version
+bon                     # generate AGENTS.md / .cursorrules, locale auto-detected
+bon --dir path/to       # set output directory (creates if missing)
+bon --force             # overwrite existing file
+bon --lang ts           # choose python|js|ts|rust (default: python)
+bon --editor cursor     # choose codex|cursor|claudecode|copilot (default: codex)
+bon --help              # show help
+bon --version           # show version
 ```
 
-## What the template enforces 🎯
-- Locale aware: detects `LANG`/`LC_ALL`/OS (WSL prefers Windows). Japanese/English text is emitted accordingly.
-- Docs-first: AGENTS.md stays generic; project specifics live in `docs/concept.md`, `docs/spec.md`, `docs/architecture.md`, `docs/plan.md`.
-- Concept: feature table with Spec IDs, dependencies, MVP/phases. User approval is required when concept is created/updated.
-- Spec: chapters per feature group, numbered Given/When/Then with matching Spec IDs. Input validation and error behavior are numbered; errors/messages are kept in a dedicated list.
-- Architecture: layer responsibilities, dependencies, key interfaces spelled out; forbid god APIs/data (minimal arguments/fields only). Logging/error conventions (e.g., `[bon][E1] ...`) are defined; non-functionals aren’t over-constrained.
-- Plan: checklist per phase; secure user agreement when the plan is ready.
-- Samples/snippets: include one success and one failure example with Error IDs, matching implementation text exactly.
-- `.env`: never generates `.env.sample`; AGENTS.md tells you required env keys and where they’re used.
+---
 
-## Document-by-document highlights (with sample snippets) 📚
-- Concept (`docs/concept.md`): Feature table with Spec IDs and dependencies. Example row: `F2 | Template generation | outputs AGENTS.md/.cursorrules/... | Phase1 | depends on F1`.
-- Spec (`docs/spec.md`): Spec IDs mirrored in headings, Given/When/Then style. Example title: `4.1 [F2] When --dir is set, create directories recursively`.
-- Architecture (`docs/architecture.md`): Lists layers + key interfaces; forbids god APIs/data. Log/error format sample: `[bon][E2] Unsupported editor: ...`.
-- Plan (`docs/plan.md`): Phase checklist, requires user approval when the plan is ready.
-- Samples inside AGENTS: success `bon --dir ./project --lang ts --editor cursor` → `.cursorrules`; failure `bon --editor unknown` → `[bon][E2] Unsupported editor: ...`.
+## Generated structure
 
-## Output targets
-- codex/claudecode: `AGENTS.md`
-- cursor: `.cursorrules`
-- copilot: `copilot-instructions.md`
+### Editor-facing guides
+- Codex / Claude Code: `AGENTS.md`
+- Cursor: `.cursorrules`
+- Copilot: `copilot-instructions.md`
 
-## Why this structure ✨
-- Traces concept → spec → architecture → plan via Spec IDs and approvals, so AI and humans stay on the same page.
-- Bilingual-ready: if AGENTS is Japanese, docs stay Japanese and comments are bilingual—no guessing.
-- Guardrails against bloat: lean APIs/data, fixed error formats, no project secrets, and `.env.sample` is never generated.
-- Fast onboarding: tiny success/failure snippets anchor expectations; editors/files are auto-targeted per tool.
-- Human-friendly: concept/plan require explicit user approval, keeping control with the team while AI handles the boilerplate.
+### Project docs (`docs/`)
+- `docs/concept.md`
+  - Feature table with Spec IDs, dependencies, MVP/phases
+  - Example: `F2 | Template generation | AGENTS.md/.cursorrules/... | Phase1 | depends on F1`
+- `docs/spec.md`
+  - Chapters per feature group
+  - Headings include Spec IDs; numbered Given / When / Then
+  - Input validation and error behaviors are numbered; errors/messages kept in a list
+- `docs/architecture.md`
+  - Layer responsibilities, dependencies, key interfaces
+  - Minimal APIs/args, forbid god API/data
+  - Log/error format sample (e.g., `[bon][E2] Unsupported editor: ...`)
+- `docs/plan.md`
+  - Checklists by phase
+  - Explicitly get user agreement when the plan is ready
+
+---
+
+## Template guidance 🎯
+- Locale: detect `LANG` / `LC_ALL` / OS (WSL prefers Windows) and emit JA/EN accordingly.
+- Docs-first: AGENTS is generic; project specifics go into concept/spec/architecture/plan under `docs/`.
+- Concept: Spec ID feature table with dependencies/phases; get agreement when created/updated.
+- Spec: Spec IDs in headings; Given / When / Then; validation and errors numbered, with an error/message list.
+- Architecture: Layers + interfaces spelled out; no god API/data; logging/error format (e.g., `[bon][E1] ...`).
+- Plan: Phase checklists; get agreement when the plan is done.
+- Samples/snippets: one-line success + one-line failure with Error IDs matching implementation.
+- `.env`: no `.env.sample`; AGENTS tells required keys and where they’re used.
+
+---
+
+## Locale and writing style
+- Locale from `LANG` / `LC_ALL` / OS (WSL prefers Windows).
+- If Japanese: docs are in Japanese; code comments are bilingual to keep both humans and AI on the same page.
+
+---
 
 ## Development
-- Tests: `npm test`
+
+Tests:
+
+```bash
+npm test
+```
+
+PRs and feedback are welcome.

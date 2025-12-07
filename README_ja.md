@@ -1,16 +1,52 @@
 # bon-agents-md ⚡️
 
-`bon` コマンドひとつで、AI アシスタント向けの AGENTS.md を生成します。テンプレートは軽量で、プロジェクト固有情報は `docs/` に逃がしつつ、concept/spec/architecture/plan の書き方を明示して AI の誤生成を防ぎます。人間の合意を通しやすくし、AI の暴走を抑えつつ、セットアップを一瞬で終わらせるためのツールです。ワンコマンドでガイドが揃うので、開発を始めるのがちょっと楽しくなります。🎉
+`bon-agents-md` は、AI アシスタント向けのガイド（AGENTS.md など）を  
+**ワンコマンドで生成するためのツール**です。
 
-## なんで bon？🌈
+- 各エディタ（Codex CLI / Cursor / Claude Code / Copilot）ごとのガイドを自動生成
+- concept / spec / architecture / plan を **Spec ID でひとつながり**に管理
+- プロジェクト固有の情報は `docs/` に分離して、AI の誤読・誤生成を抑制
 
-| 求めるもの | bon がくれるもの |
-| --- | --- |
-| concept/spec/architecture/plan の高品質な型 | Spec ID で連携し、合意ポイントも明示するガードレール |
-| ぶれない仕様記述 | 見出しに Spec ID を入れた Given/When/Then で振る舞いを正確に記載 |
-| AI でも安心な設計ノウハウ | レイヤー責務＋主要 I/F を提示し、ゴッド API/データ禁止をビルトイン |
-| すぐ試せるサンプル | 成功/失敗の短い例（Error ID 付き、実装メッセージと一致）で期待値を固定 |
-| マルチエディタ対応 | codex/cursor/claudecode/copilot 向けに `AGENTS.md` / `.cursorrules` / `copilot-instructions.md` を自動選択 |
+「まず AI に渡す設計ガイドをサッと用意したい」「仕様のブレや手戻りを減らしたい」
+ときの**スターターキット**として使えます。
+
+---
+
+## なにが嬉しいの？（メリット）✨
+
+### 1. AGENTS ガイドを数秒で用意できる
+- `bon` コマンドを 1 回実行するだけで、エディタごとに最適化されたガイドを生成  
+  - Codex / Claude Code: `AGENTS.md`  
+  - Cursor: `.cursorrules`  
+  - Copilot: `copilot-instructions.md`
+- 「まずこのファイルを AI に読ませればいい」という状態をすぐ作れます。
+
+### 2. concept/spec/architecture/plan が一貫した「型」になる
+- `docs/concept.md` / `docs/spec.md` / `docs/architecture.md` / `docs/plan.md` をひと揃いで生成
+- すべて **Spec ID** で連携されるので、
+  - 機能 → 仕様 → 実装レイヤー → 開発計画  
+  がトレースしやすくなります。
+- 人間どうしの合意ポイントも明示されるため、レビューや相談がしやすくなります。
+
+### 3. AI に渡しても「暴走しにくい」設計ノウハウをビルトイン
+- Spec は Given / When / Then 形式で、見出しに Spec ID を併記  
+  → 「どの条件でどう動くか」を AI にも人にも誤解させにくい
+- Architecture はレイヤー責務と主要 I/F を明示し、  
+  **ゴッド API / ゴッドデータ** を避ける指針を含めます。
+- エラーは Error ID（例: `[bon][E2] ...`）付きで固定し、  
+  ログ・メッセージの表現が AI に壊されにくくなります。
+
+### 4. サンプルが短くハッキリしていて、期待値を合わせやすい
+- 成功パターン / 失敗パターンを 1 行ずつ用意し、Error ID も付けてあります。
+- 「こういう入力のときに、こういうログ・エラーが出る」が一目で分かるため、  
+  AI にとっても人にとっても**挙動のイメージが揃えやすい**構成です。
+
+### 5. .env の扱いも安全寄りのデフォルト
+- `.env.sample` は自動生成しません。
+- 必要な環境変数と利用箇所だけを AGENTS ガイド側で指示するスタイルにすることで、  
+  「とりあえず秘密を書いちゃった」事故を減らします。
+
+---
 
 ## インストール
 
@@ -18,12 +54,14 @@
 npm install -g bon-agents-md
 ```
 
-要件: Node.js 16+
+- 要件: Node.js 16+
+
+---
 
 ## 使い方
 
 ```bash
-bon                     # ロケール自動判定で AGENTS.md を生成
+bon                     # ロケール自動判定で AGENTS.md / .cursorrules などを生成
 bon --dir path/to       # 出力先ディレクトリを指定（無ければ作成）
 bon --force             # 既存ファイルを上書き
 bon --lang ts           # python|js|ts|rust から言語ガイダンスを選択（既定: python）
@@ -32,34 +70,51 @@ bon --help              # ヘルプ表示
 bon --version           # バージョン表示
 ```
 
-## テンプレートが指示すること 🎯
-- ロケール対応: `LANG`/`LC_ALL`/OS から日本語・英語を判定（WSL は Windows 優先）。該当言語でテンプレートを出力。
-- ドキュメントは `docs/` へ: AGENTS.md は共通テンプレートのみ。プロジェクト固有の背景や詳細は `docs/concept.md` / `docs/spec.md` / `docs/architecture.md` / `docs/plan.md` に記載。
-- concept: 機能表に Spec ID・依存関係・MVP/フェーズを記載。作成・更新時は必ずユーザーと合意する。
-- spec: 機能グループごとに章立てし、Spec ID を併記した番号付き Given/When/Then で記述。入力バリデーションやエラー挙動も番号付きで整理し、エラー/メッセージは一覧表で管理。
-- architecture: レイヤー責務・依存方向と主要 I/F を明示。API は最小粒度・最小引数、データ属性は必要最小限（ゴッド API/データ禁止）。非機能は過剰に固定しないが、ログ/エラー方針（例: `[bon][E1] ...`）は明示。
-- plan: フェーズ別チェックリスト。plan ができたタイミングでもユーザー合意を取る。
-- サンプル/スニペット: 成功と失敗の例を各 1 行入れる。Error ID を必ず含め、実装の文言と完全一致させる。例: 成功 `bon --dir ./project --lang ts --editor cursor` → `.cursorrules`、失敗 `bon --editor unknown` → `[bon][E2] Unsupported editor: ...`。
-- `.env`: `.env.sample` は生成しない。必要なキーと利用箇所を AGENTS.md で指示する。
+---
 
-## 文書ごとの工夫とサンプル
-- Concept (`docs/concept.md`): Spec ID 付き機能表で依存関係とフェーズを明示。例: `F2 | テンプレート生成 | AGENTS.md/.cursorrules/... | フェーズ1 | F1 依存`。
-- Spec (`docs/spec.md`): 見出しに Spec ID を併記し、前提/条件/振る舞いで行動を記述。例タイトル: `4.1 [F2] --dir を指定した場合、ディレクトリを再帰的に作成する`。
-- Architecture (`docs/architecture.md`): レイヤー責務と主要 I/F を列挙し、ゴッド API/データ禁止。ログ/エラー形式サンプル: `[bon][E2] Unsupported editor: ...`。
-- Plan (`docs/plan.md`): フェーズ別チェックリスト。完成時にユーザー合意を取ることを明記。
-- AGENTS 内サンプル: 成功 `bon --dir ./project --lang ts --editor cursor` → `.cursorrules`、失敗 `bon --editor unknown` → `[bon][E2] Unsupported editor: ...`。
+## 生成されるファイル構成
 
-## 出力されるファイル名
-- codex/claudecode: `AGENTS.md`
-- cursor: `.cursorrules`
-- copilot: `copilot-instructions.md`
+### エディタ向けガイド
 
-## この構成の狙い（メリット）✨
-- concept→spec→architecture→plan を Spec ID でトレースし、合意ポイントを明示して誤解を減らす（人が主導権を持てる）。
-- 日本語テンプレート時はドキュメントを日本語、コードコメントを日英併記とする指針で、ロケール差分の迷子を防ぐ。
-- API/データのスリム化とエラー文言の固定で、AI が不要な生成や改変をしにくくし、ログ/エラーも一貫。
-- 例示は最小限かつ Error ID 付きの成功/失敗サンプルで期待値をピン留めし、オンボーディングを楽にする。
-- `.env.sample` を作らず秘密を入れない/漏らさない方針をデフォルト化し、安全に素早く始められる。
+- Codex / Claude Code: `AGENTS.md`
+- Cursor: `.cursorrules`
+- Copilot: `copilot-instructions.md`
+
+### プロジェクト固有ドキュメント（`docs/` 配下）
+
+- `docs/concept.md`
+  - 機能一覧表に Spec ID・依存関係・MVP/フェーズを記載
+  - 例: `F2 | テンプレート生成 | AGENTS.md/.cursorrules/... | フェーズ1 | F1 依存`
+- `docs/spec.md`
+  - 機能グループごとに章立て
+  - 見出しに Spec ID を併記し、番号付き Given / When / Then で記述
+  - 入力バリデーションやエラー挙動も番号付きで整理し、エラー/メッセージは一覧表で管理
+- `docs/architecture.md`
+  - レイヤー責務・依存方向・主要 I/F を明示
+  - API は最小限の粒度と引数に抑え、ゴッド API/データを禁止
+  - ログ/エラー形式のサンプル（例: `[bon][E2] Unsupported editor: ...`）を記載
+- `docs/plan.md`
+  - フェーズ別のチェックリスト
+  - plan 完成時にもユーザー合意を取ることを明示
+
+---
+
+## ロケールと記述方針
+
+- `LANG` / `LC_ALL` / OS 設定からロケールを判定（WSL は Windows 側を優先）
+- 日本語ロケールの場合:
+  - ドキュメントは日本語
+  - コードコメントは日英併記推奨  
+  → チーム内での読みやすさと、AI にとっての理解しやすさの両立を狙います。
+
+---
 
 ## 開発
-- テスト: `npm test`
+
+- テスト:
+
+```bash
+npm test
+```
+
+PR やフィードバックも歓迎です。
