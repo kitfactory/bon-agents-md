@@ -6,6 +6,9 @@ const { spawnSync } = require('child_process');
 
 const bon = require('../bin/bon.js');
 
+const tempDirs = [];
+
+
 function test(name, fn) {
   try {
     fn();
@@ -17,8 +20,37 @@ function test(name, fn) {
 }
 
 function tempDir() {
-  return fs.mkdtempSync(path.join(os.tmpdir(), 'bon-'));
+  const candidates = [];
+  if (process.env.TMPDIR) candidates.push(process.env.TMPDIR);
+  candidates.push(os.tmpdir());
+  candidates.push(path.join(__dirname, '..', '.bon-tmp'));
+
+  let lastError = null;
+  for (const base of candidates) {
+    try {
+      if (base.endsWith('.bon-tmp')) {
+        fs.mkdirSync(base, { recursive: true });
+      }
+      const dir = fs.mkdtempSync(path.join(base, 'bon-'));
+      tempDirs.push(dir);
+      return dir;
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  throw lastError || new Error('Failed to create temp dir');
 }
+
+process.on('exit', () => {
+  for (const dir of tempDirs) {
+    try {
+      fs.rmSync(dir, { recursive: true, force: true });
+    } catch (_) {
+      // ignore cleanup errors
+    }
+  }
+});
 
 test('parseArgs defaults', () => {
   const parsed = bon.parseArgs([]);
@@ -47,32 +79,30 @@ test('languageGuidance mentions env handling', () => {
 
 test('createTemplate references docs and avoids project-specific info', () => {
   const tpl = bon.createTemplate({ projectName: 'demo', language: 'ts', editor: 'cursor', locale: 'en' });
-  assert.ok(tpl.includes('docs/concept.md'), 'Should point to docs');
+  assert.ok(tpl.includes('docs/OVERVIEW.md'), 'Should point to docs/OVERVIEW.md');
   assert.ok(tpl.toLowerCase().includes('plan.md'), 'Should prompt to use plan.md checklist');
   assert.ok(!tpl.includes('demo'), 'Template should not bake project-specific info');
 });
 
 test('createTemplate Japanese markers', () => {
   const tpl = bon.createTemplate({ projectName: 'demo', language: 'rust', editor: 'codex', locale: 'ja' });
-  assert.ok(tpl.includes('前提') || tpl.includes('仕様記述'), 'Japanese template should include Japanese sections');
+  assert.ok(tpl.includes('Top 5') && tpl.includes('作業開始'), 'Japanese template should include Japanese sections');
 });
 
 test('createTemplate Japanese doc and comment rules', () => {
   const tpl = bon.createTemplate({ projectName: 'demo', language: 'python', editor: 'codex', locale: 'ja' });
-  assert.ok(tpl.includes('ドキュメント/コメント作成ルール'), 'Should instruct on doc/comment rules in Japanese template');
-  assert.ok(tpl.includes('日本語と英語を併記'), 'Should require bilingual comments when AGENTS is Japanese');
-  assert.ok(tpl.includes('仕様タイトルは'), 'Should explain how to title specs with action/behavior wording');
-  assert.ok(tpl.includes('ゴッド'), 'Should warn against god APIs/data in Japanese template');
-  assert.ok(tpl.includes('サンプル/スニペット'), 'Should request samples/snippets in Japanese template');
+  assert.ok(tpl.includes('言語・コメント'), 'Should include language/comment rules section');
+  assert.ok(tpl.includes('日本語 + 英語を併記'), 'Should require bilingual comments when AGENTS is Japanese');
+  assert.ok(tpl.includes('ゴッド'), 'Should warn against god APIs/classes/data');
+  assert.ok(tpl.includes('サンプル（最低限）'), 'Should include minimal examples');
 });
 
 test('createTemplate English doc rules include concept/spec guidance', () => {
   const tpl = bon.createTemplate({ projectName: 'demo', language: 'ts', editor: 'codex', locale: 'en' });
-  assert.ok(tpl.includes('Documentation / Comment Rules'), 'Should include doc rules section in English template');
-  assert.ok(tpl.toLowerCase().includes('table of features'), 'Concept guidance should mention feature table');
-  assert.ok(tpl.toLowerCase().includes('spec title should'), 'Spec title guidance should be present');
-  assert.ok(tpl.toLowerCase().includes('interfaces'), 'Architecture guidance should mention interfaces in English template');
-  assert.ok(tpl.toLowerCase().includes('samples/snippets'), 'English template should request samples/snippets');
+  assert.ok(tpl.includes('Top 5 (Must Follow)'), 'Should include Top 5 in English template');
+  assert.ok(tpl.toLowerCase().includes('design rules'), 'Should include design rules section in English template');
+  assert.ok(tpl.includes('docs/OVERVIEW.md'), 'Should point to docs/OVERVIEW.md');
+  assert.ok(tpl.toLowerCase().includes('minimal examples'), 'English template should include minimal examples');
 });
 
 test('isWsl detects microsoft release', () => {
@@ -87,6 +117,7 @@ test('CLI creates AGENTS.md and blocks overwrite without --force', () => {
   assert.strictEqual(first.status, 0, first.stderr);
   const target = path.join(dir, bon.targetFileName('codex'));
   assert.ok(fs.existsSync(target), 'AGENTS file should be created');
+  assert.ok(fs.existsSync(path.join(dir, 'docs', 'OVERVIEW.md')), 'docs/OVERVIEW.md should be created');
 
   const second = spawnSync('node', [script, '--dir', dir], { encoding: 'utf8' });
   assert.notStrictEqual(second.status, 0, 'Second run without --force should fail');

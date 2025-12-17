@@ -35,9 +35,9 @@ Requires Node.js 16+
 ## Usage
 
 ```bash
-bon                     # generate AGENTS.md / .cursorrules, locale auto-detected
+bon                     # generate guide + docs/OVERVIEW.md (if missing), locale auto-detected
 bon --dir path/to       # set output directory (creates if missing)
-bon --force             # overwrite existing file
+bon --force             # overwrite existing guide file
 bon --lang ts           # choose python|js|ts|rust (default: python)
 bon --editor cursor     # choose codex|cursor|claudecode|copilot (default: codex)
 bon --help              # show help
@@ -54,26 +54,16 @@ bon --version           # show version
 - Copilot: `copilot-instructions.md`
 
 ### Project docs (`docs/`)
-- `docs/concept.md`
-  - Feature table with Spec IDs, dependencies, MVP/phases
-  - Example: `F2 | Template generation | AGENTS.md/.cursorrules/... | Phase1 | depends on F1`
-- `docs/spec.md`
-  - Chapters per feature group
-  - Headings include Spec IDs; numbered Given / When / Then
-  - Input validation and error behaviors are numbered; errors/messages kept in a list
-- `docs/architecture.md`
-  - Layer responsibilities, dependencies, key interfaces
-  - Minimal APIs/args, forbid god API/data
-  - Log/error format sample (e.g., `[bon][E2] Unsupported editor: ...`)
-- `docs/plan.md`
-  - Checklists by phase
-  - Explicitly get user agreement when the plan is ready
+- `docs/OVERVIEW.md` (created if missing)
+  - Single entrypoint: current status + scope + links + operating rules
+- You own the rest (project-specific):
+  - `docs/concept.md`, `docs/spec.md`, `docs/architecture.md`, `docs/plan.md`
 
 ---
 
 ## Template guidance 🎯
 - Locale: detect `LANG` / `LC_ALL` / OS (WSL prefers Windows) and emit JA/EN accordingly.
-- Docs-first: AGENTS is generic; project specifics go into concept/spec/architecture/plan under `docs/`.
+- Docs-first: AGENTS is lean and points to `docs/OVERVIEW.md`; project specifics live under `docs/`.
 - Concept: Spec ID feature table with dependencies/phases; get agreement when created/updated.
 - Spec: Spec IDs in headings; Given / When / Then; validation and errors numbered, with an error/message list.
 - Architecture: Layers + interfaces spelled out; no god API/data; logging/error format (e.g., `[bon][E1] ...`).

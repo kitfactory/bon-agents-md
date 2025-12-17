@@ -1,6 +1,8 @@
 # bon-agents-md アーキテクチャ
 
-本設計は、`bon` CLI が AGENTS.md を生成するまでのレイヤー構造と責務分担を示す。単一責務・DI 可能な抽象境界を重視し、ゴッドクラス化を避ける。
+本設計は、`bon` CLI が AI ガイド（`AGENTS.md` 等）と `docs/OVERVIEW.md` を生成するまでのレイヤー構造と責務分担を示す。単一責務・DI 可能な抽象境界を重視し、ゴッドクラス化を避ける。
+
+運用の入口は `docs/OVERVIEW.md` とし、ガイド（AGENTS.md 等）は詳細を抱えずに `docs/OVERVIEW.md` を参照する。
 
 ## 目標と制約
 - npm グローバル CLI (`bon`) として動作し、Node.js 16+ を前提。
@@ -9,9 +11,10 @@
 - ロケール判定: ユーザー指定 > `LANG`/`LC_ALL` > OS 推定。WSL では Windows 側言語を優先。判定不可は英語。
 - `.env.sample` は生成しない。AGENTS.md に環境変数・`.env` の設定例と利用箇所を明示する。
 - AGENTS.md が日本語の場合は concept/spec/architecture/plan を日本語で作成し、ソースコードのコメントは日本語と英語を併記するルールをテンプレートに含める。
-- AGENTS.md 自体にはプロジェクト固有情報を直接持たせず、`docs/`（concept/spec/architecture など）を参照してプロジェクトを把握するよう誘導する共通テンプレートとする。
+- AGENTS.md 自体にはプロジェクト固有情報を直接持たせず、**`docs/OVERVIEW.md` を唯一の入口**としてプロジェクトを把握するよう誘導する共通テンプレートとする。
+- `docs/OVERVIEW.md` が無い場合は作成する（既存は原則上書きしない）。
 - 出力ファイル名はエディタに合わせる: codex/claudecode は `AGENTS.md`、cursor は `.cursorrules`、copilot は `copilot-instructions.md`。
-- `docs/` に concept/spec/architecture が無い場合に作成を促し、`docs/plan.md` のチェックリストを活用するようテンプレートで案内する。
+- `docs/OVERVIEW.md` を入口として運用する。必要なら `docs/` 配下に concept/spec/architecture/plan を整備し、`docs/plan.md` のチェックリストを活用するよう案内する。
 
 ## レイヤー構成
 
@@ -36,7 +39,7 @@
 
 ### 4) 出力層（ファイル I/O）
 - 入力: 生成文字列、`--dir`、`--force`。
-- 責務: ディレクトリ作成、既存ファイルの存在確認（エディタに応じたファイル名）、`--force` に応じた上書き、ファイル書き出し。
+- 責務: ディレクトリ作成、既存ファイルの存在確認（エディタに応じたファイル名）、`--force` に応じた上書き、ファイル書き出し。あわせて `docs/OVERVIEW.md` を **未存在時のみ**生成する。
 - 抽象境界: `FileWriter` として fs への依存を隔離し、テストでモック/スタブを差し替えられるようにする。
 
 ### 5) ロギング/エラーハンドリング
@@ -99,7 +102,7 @@ type TemplateSections = {
 - 仕様/要求仕様: 英語は Given/When/Then、日本語は 前提/条件/振る舞い。
 - 設計: レイヤー構造・単一責務・抽象クラス/DI 指針。ゴッドクラス/雑多ヘルパー禁止。シンプルなインターフェースを提示。
 - テスト方針: 機能・レイヤー単位で完了。モックは補助、本番経路（実通信/実接続）が通ったら完了。必要な環境変数・接続情報・`.env` の配置場所と設定例を記載（`.env.sample` は生成しない）。難航時はステップごとにデバッグログを追加するよう指示。
-- ドキュメント参照: AGENTS.md から `docs/` の concept/spec/architecture を参照し、プロジェクト固有の背景・設計詳細を取得するよう案内する。
+- ドキュメント参照: AGENTS.md から **`docs/OVERVIEW.md` を参照**し、そこからプロジェクト固有の背景・設計詳細（concept/spec/architecture/plan）に辿れるよう案内する。
 
 ## 言語別テンプレート指針
 - Python: `uv` + `.venv` 仮想環境、`pytest`、Lint/Format（`ruff`/`black` など）。必要な環境変数例を示し、`.env` の利用箇所を明記する。

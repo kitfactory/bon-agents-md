@@ -22,7 +22,8 @@
 - 「まずこのファイルを AI に読ませればいい」という状態をすぐ作れます。
 
 ### 2. concept/spec/architecture/plan が一貫した「型」になる
-- `docs/concept.md` / `docs/spec.md` / `docs/architecture.md` / `docs/plan.md` をひと揃いで生成
+- `docs/OVERVIEW.md` を生成し（無ければ作成）、運用の入口とリンク集を用意
+- `docs/concept.md` / `docs/spec.md` / `docs/architecture.md` / `docs/plan.md` は「こう書く/こう運用する」をガイドし、プロジェクト固有内容はあなたが管理
 - すべて **Spec ID** で連携されるので、
   - 機能 → 仕様 → 実装レイヤー → 開発計画  
   がトレースしやすくなります。
@@ -61,9 +62,9 @@ npm install -g bon-agents-md
 ## 使い方
 
 ```bash
-bon                     # ロケール自動判定で AGENTS.md / .cursorrules などを生成
+bon                     # ロケール自動判定でガイド + docs/OVERVIEW.md（無ければ作成）を生成
 bon --dir path/to       # 出力先ディレクトリを指定（無ければ作成）
-bon --force             # 既存ファイルを上書き
+bon --force             # 既存ガイドファイルを上書き
 bon --lang ts           # python|js|ts|rust から言語ガイダンスを選択（既定: python）
 bon --editor cursor     # codex|cursor|claudecode|copilot からエディタを選択（既定: codex）
 bon --help              # ヘルプ表示
@@ -82,20 +83,10 @@ bon --version           # バージョン表示
 
 ### プロジェクト固有ドキュメント（`docs/` 配下）
 
-- `docs/concept.md`
-  - 機能一覧表に Spec ID・依存関係・MVP/フェーズを記載
-  - 例: `F2 | テンプレート生成 | AGENTS.md/.cursorrules/... | フェーズ1 | F1 依存`
-- `docs/spec.md`
-  - 機能グループごとに章立て
-  - 見出しに Spec ID を併記し、番号付き Given / When / Then で記述
-  - 入力バリデーションやエラー挙動も番号付きで整理し、エラー/メッセージは一覧表で管理
-- `docs/architecture.md`
-  - レイヤー責務・依存方向・主要 I/F を明示
-  - API は最小限の粒度と引数に抑え、ゴッド API/データを禁止
-  - ログ/エラー形式のサンプル（例: `[bon][E2] Unsupported editor: ...`）を記載
-- `docs/plan.md`
-  - フェーズ別のチェックリスト
-  - plan 完成時にもユーザー合意を取ることを明示
+- `docs/OVERVIEW.md`（無ければ作成）
+  - 入口（現在地・スコープ・重要リンク・運用ルール）
+- それ以外（プロジェクト固有の正本）はあなたが用意:
+  - `docs/concept.md` / `docs/spec.md` / `docs/architecture.md` / `docs/plan.md`
 
 ---
 

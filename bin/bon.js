@@ -277,7 +277,288 @@ function languageGuidance(lang, locale) {
   }
 }
 
+function createLeanTemplate({ projectName, language, editor, locale }) {
+  void projectName;
+
+  const displayLang = langDisplayName(language);
+  const displayEditor = editorDisplayName(editor);
+
+  const heading = locale === 'ja' ? '# AGENTS (共通テンプレート / Lean)' : '# AGENTS (Shared Template / Lean)';
+
+  const intro =
+    locale === 'ja'
+      ? [
+          'この AGENTS.md は **運用の最小ルール**を記載します。',
+          '詳細（レビューゲートのチェックリスト、Phase Close、spec/plan 分割ルール、DoD、エラー一覧など）は **`docs/OVERVIEW.md`** を正とします。',
+          '機密情報は記載しないでください。'
+        ].join('\n')
+      : [
+          'This `AGENTS.md` contains **minimal operating rules**.',
+          'For details (review gate checklist, Phase Close, spec/plan split rules, DoD, error/message list, etc.), treat **`docs/OVERVIEW.md`** as canonical.',
+          'Do not place secrets in this file.'
+        ].join('\n');
+
+  const top5 =
+    locale === 'ja'
+      ? [
+          '## Top 5（必ず守る）',
+          '1. **入口は `docs/OVERVIEW.md`**（全体像・現在地・リンク集）。作業前後で必ず確認/更新する。',
+          '2. **正本（Canonical）は `docs/`**。迷ったらまず正本を更新する（フェーズ運用は任意・適用条件あり）。',
+          '3. **レビューゲートで必ず停止**：自己レビュー → 完成と判断できたらユーザー確認 → 合意で次へ。',
+          '4. **`docs/plan.md` は NOW のみ**（いまやるチェックリスト＋リンク）。完了/履歴は別へ逃がす。',
+          '5. **大きい変更は “提案→合意→適用”**（構成変更、ID変更、大量削除、互換影響など）。'
+        ].join('\n')
+      : [
+          '## Top 5 (Must Follow)',
+          '1. **Single entrypoint is `docs/OVERVIEW.md`** (status, scope, links). Check/update it before and after work.',
+          '2. **Canonical is `docs/`**. When in doubt, update canonical first (phases are optional; only when conditions apply).',
+          '3. **Stop at review gates**: self-review → ask user to confirm when “done” → proceed only with agreement.',
+          '4. **`docs/plan.md` is NOW-only** (checklist + links). Move done/history elsewhere.',
+          '5. **Large changes require “propose → agree → apply”** (restructure, ID changes, large deletions, compatibility impact).'
+        ].join('\n');
+
+  const designDirectives =
+    locale === 'ja'
+      ? [
+          '## 設計指示（必須 / 短縮版）',
+          '- **ユーザー向けI/Fは単純に**：引数・型の種類を最小化し、内部都合の型/状態を漏らさない。',
+          '- **データモデルは共通属性で集約**：似た概念のオブジェクトを乱立させず、共通属性を抽出してコアに寄せる。',
+          '- **拡張は合成で**：差分は `details/meta` 等の入れ子で表現してI/Fを安定化（ただしゴッドデータ禁止）。',
+          '- **`details/meta` のゴミ箱化禁止**：キー集合/構造は spec で定義し、「不明キー何でもOK」を許さない。肥大化したらコアへ昇格。',
+          '- **ゴッドAPI/ゴッドクラス禁止**：最小I/F・最小データで責務分割する。',
+          '- **依存方向の逆流禁止**：レイヤー責務と依存方向は architecture に明記し、それに従う。'
+        ].join('\n')
+      : [
+          '## Design Rules (Required / Short)',
+          '- **Keep user-facing I/F simple**: minimize argument count and type variety; do not leak internal types/states.',
+          '- **Unify data models by shared attributes**: avoid fragmented objects; extract shared core attributes.',
+          '- **Extend via composition**: express diffs with nested `details/meta` while keeping I/F stable (no god data).',
+          '- **No `details/meta` dumping**: define keys/shape in spec; forbid “any key OK”; promote shared fields into core over time.',
+          '- **No god APIs/classes**: split responsibilities; keep I/F minimal.',
+          '- **No dependency inversion**: document dependency direction in architecture and follow it.'
+        ].join('\n');
+
+  const routine =
+    locale === 'ja'
+      ? [
+          '## 作業開始 60 秒ルーチン（初動固定）',
+          '1) `docs/OVERVIEW.md`：現在フェーズ / 今回スコープ / 参照リンクを確認',
+          '2) `docs/concept.md`：対象 Spec ID と範囲を確認',
+          '3) `docs/spec.md`：該当章へ移動（必要なら分割する）',
+          '4) `docs/plan.md`：NOW チェックリストと詳細リンクを確認',
+          '5) （任意）フェーズ運用時のみ `docs/phases/<PHASE>/` を確認'
+        ].join('\n')
+      : [
+          '## 60-second Start Routine',
+          '1) `docs/OVERVIEW.md`: confirm current phase/scope/links',
+          '2) `docs/concept.md`: confirm target Spec IDs and scope',
+          '3) `docs/spec.md`: jump to the relevant section (split when needed)',
+          '4) `docs/plan.md`: confirm NOW checklist and links',
+          '5) (Optional) If using phases, check `docs/phases/<PHASE>/`'
+        ].join('\n');
+
+  const safeUpdates =
+    locale === 'ja'
+      ? [
+          '## 更新の安全ルール（強すぎない版）',
+          '### そのまま適用してよい変更（合意不要）',
+          '- 誤字修正、リンク更新、追記（既存の意味を変えない）',
+          '- plan のチェック更新（チェックボックスの進捗）',
+          '- 既存方針に沿った小さな明確化（文章の補足）',
+          '',
+          '### “提案→合意→適用” が必要な変更（事故防止）',
+          '- 大量削除、章構成の変更、ファイルの移動/リネーム',
+          '- Spec ID / Error ID の変更、互換性に影響する仕様変更',
+          '- API / データモデルの形を変える設計変更',
+          '- セキュリティ対応・重大バグ修正で挙動が変わるもの（提案は簡潔でよいが必須）'
+        ].join('\n')
+      : [
+          '## Safe Updates (Practical)',
+          '### OK without agreement',
+          '- Typos, link updates, additive notes (no meaning change)',
+          '- Plan checkbox progress updates',
+          '- Small clarifications aligned with existing policy',
+          '',
+          '### Require “propose → agree → apply”',
+          '- Large deletions, restructuring, moves/renames',
+          '- Spec ID / Error ID changes or compatibility-affecting spec changes',
+          '- API / data-shape changes',
+          '- Security fixes or major bug fixes that change behavior (proposal must be explicit)'
+        ].join('\n');
+
+  const languageAndComments =
+    locale === 'ja'
+      ? [
+          '## 言語・コメント',
+          '- AGENTS.md が日本語の場合、`docs/**` は日本語で作成する',
+          '- ソースコードのコメントは **日本語 + 英語を併記**'
+        ].join('\n')
+      : [
+          '## Language & Comments',
+          '- Write `docs/**` in English (this guide is English)',
+          '- Write source-code comments in English (bilingual comments are optional if your team needs them)'
+        ].join('\n');
+
+  const languageSection =
+    locale === 'ja'
+      ? `## 言語別指針 (${displayLang})\n${languageGuidance(language, locale)}`
+      : `## Language Guidance (${displayLang})\n${languageGuidance(language, locale)}`;
+
+  const editorSection =
+    locale === 'ja'
+      ? `## 対応エディタ\n- ターゲット: ${displayEditor}\n- 他のエディタ指定時は CLI オプション \`--editor\` を使用`
+      : `## Target Editor\n- Target: ${displayEditor}\n- Use \`--editor\` to choose another editor`;
+
+  const examples =
+    locale === 'ja'
+      ? [
+          '## サンプル（最低限）',
+          '- 成功例: `bon --dir ./project --lang ts --editor codex`',
+          '- 失敗例: `bon --editor unknown` → `[bon][E_EDITOR_UNSUPPORTED] Unsupported editor: unknown`'
+        ].join('\n')
+      : [
+          '## Minimal Examples',
+          '- Success: `bon --dir ./project --lang ts --editor codex`',
+          '- Failure: `bon --editor unknown` → `[bon][E_EDITOR_UNSUPPORTED] Unsupported editor: unknown`'
+        ].join('\n');
+
+  const details =
+    locale === 'ja'
+      ? ['## 詳細は OVERVIEW を正とする', '`docs/OVERVIEW.md` を参照する。'].join('\n')
+      : ['## Canonical Details Live in OVERVIEW', 'See `docs/OVERVIEW.md`.'].join('\n');
+
+  return [
+    heading,
+    '',
+    intro,
+    '',
+    top5,
+    '',
+    designDirectives,
+    '',
+    routine,
+    '',
+    safeUpdates,
+    '',
+    languageAndComments,
+    '',
+    languageSection,
+    '',
+    editorSection,
+    '',
+    examples,
+    '',
+    details
+  ].join('\n');
+}
+
+function createOverviewTemplate(locale) {
+  if (locale === 'ja') {
+    return [
+      '# docs/OVERVIEW.md（入口 / 運用の正本）',
+      '',
+      'この文書は **プロジェクト運用の正本**です。`AGENTS.md` は最小ルールのみで、詳細はここに集約します。',
+      '',
+      '---',
+      '',
+      '## 現在地（必ず更新）',
+      '- 現在フェーズ: P0',
+      '- 今回スコープ（1〜5行）:',
+      '  - ...',
+      '- 非ゴール（やらないこと）:',
+      '  - ...',
+      '- 重要リンク:',
+      '  - concept: `./concept.md`',
+      '  - spec: `./spec.md`',
+      '  - architecture: `./architecture.md`',
+      '  - plan (NOW): `./plan.md`',
+      '',
+      '---',
+      '',
+      '## レビューゲート（必ず止まる）',
+      '共通原則：**自己レビュー → 完成と判断できたらユーザー確認 → 合意で次へ**',
+      '',
+      '---',
+      '',
+      '## 更新の安全ルール（判断用）',
+      '### 合意不要',
+      '- 誤字修正、リンク更新、意味を変えない追記',
+      '- plan のチェック更新',
+      '- 小さな明確化（既存方針に沿う）',
+      '',
+      '### 提案→合意→適用（必須）',
+      '- 大量削除、章構成変更、移動/リネーム',
+      '- Spec ID / Error ID の変更',
+      '- API/データモデルの形を変える設計変更',
+      '- セキュリティ/重大バグ修正で挙動が変わるもの'
+    ].join('\n');
+  }
+
+  return [
+    '# docs/OVERVIEW.md (Entry / Canonical Operations)',
+    '',
+    'This document is the **canonical source for project operations**. Keep `AGENTS.md` minimal and put details here.',
+    '',
+    '---',
+    '',
+    '## Current Status (Always Update)',
+    '- Current phase: P0',
+    '- Current scope (1–5 lines):',
+    '  - ...',
+    '- Non-goals:',
+    '  - ...',
+    '- Key links:',
+    '  - concept: `./concept.md`',
+    '  - spec: `./spec.md`',
+    '  - architecture: `./architecture.md`',
+    '  - plan (NOW): `./plan.md`',
+    '',
+    '---',
+    '',
+    '## Review Gates (Stop Here)',
+    'Principle: **self-review → ask user to confirm when “done” → proceed only with agreement**',
+    '',
+    '---',
+    '',
+    '## Safe Update Policy',
+    '### No agreement needed',
+    '- Typos, link updates, additive notes (no meaning change)',
+    '- Updating plan checkboxes',
+    '- Small clarifications aligned with existing policy',
+    '',
+    '### “Propose → Agree → Apply” required',
+    '- Large deletions, restructuring, moves/renames',
+    '- Spec ID / Error ID changes',
+    '- API / data-shape changes',
+    '- Security fixes or major bug fixes that change behavior'
+  ].join('\n');
+}
+
+function ensureOverviewFile(targetDir, locale) {
+  const docsDir = path.join(targetDir, 'docs');
+  const overviewPath = path.join(docsDir, 'OVERVIEW.md');
+
+  try {
+    fs.mkdirSync(docsDir, { recursive: true });
+  } catch (error) {
+    fail(`Could not create docs directory: ${error.message}`);
+  }
+
+  if (fs.existsSync(overviewPath)) {
+    return;
+  }
+
+  const content = createOverviewTemplate(locale);
+  try {
+    fs.writeFileSync(overviewPath, content, 'utf8');
+  } catch (error) {
+    fail(`Failed to write docs/OVERVIEW.md: ${error.message}`);
+  }
+}
+
 function createTemplate({ projectName, language, editor, locale }) {
+  // Legacy template (kept for backward compatibility).
+  // The CLI uses `createLeanTemplate` instead.
   const displayLang = langDisplayName(language);
   const displayEditor = editorDisplayName(editor);
   const docsReference =
@@ -433,10 +714,12 @@ function main() {
   }
 
   if (fs.existsSync(targetPath) && !force) {
-    fail(`AGENTS.md already exists at ${targetPath}. Use --force to overwrite.`);
+    fail(`${fileName} already exists at ${targetPath}. Use --force to overwrite.`);
   }
 
-  const template = createTemplate({
+  ensureOverviewFile(targetDir, locale);
+
+  const template = createLeanTemplate({
     projectName: path.basename(targetDir) || 'project',
     language: lang,
     editor,
@@ -446,10 +729,14 @@ function main() {
   try {
     fs.writeFileSync(targetPath, template, 'utf8');
   } catch (error) {
-    fail(`Failed to write AGENTS.md: ${error.message}`);
+    fail(`Failed to write ${fileName}: ${error.message}`);
   }
 
   console.log(`[bon] ${fileName} created at ${targetPath}`);
+  const overviewPath = path.join(targetDir, 'docs', 'OVERVIEW.md');
+  if (fs.existsSync(overviewPath)) {
+    console.log(`[bon] docs/OVERVIEW.md ready at ${overviewPath}`);
+  }
 }
 
 if (require.main === module) {
@@ -459,11 +746,13 @@ if (require.main === module) {
 module.exports = {
   parseArgs,
   detectLocale,
-  createTemplate,
+  createTemplate: createLeanTemplate,
+  createOverviewTemplate,
   isWsl,
   normalizeLanguage,
   normalizeEditor,
   targetFileName,
   languageGuidance,
+  ensureOverviewFile,
   readWindowsLocale
 };
