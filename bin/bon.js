@@ -23,7 +23,7 @@ function printHelp() {
     '',
     'Options:',
     '  -d, --dir <path>       Target directory (default: current directory)',
-    '  -f, --force            Overwrite an existing AGENTS.md',
+    '  -f, --force            Overwrite an existing guide file',
     '  --lang <python|js|ts|rust>',
     '                         Programming language (default: python)',
     '  --editor <codex|cursor|claudecode|copilot>',
@@ -35,8 +35,13 @@ function printHelp() {
   console.log(help);
 }
 
-function fail(message) {
-  console.error(`[bon] ${message}`);
+function fail(errorIdOrMessage, message) {
+  if (message === undefined) {
+    console.error(`[bon] ${errorIdOrMessage}`);
+    process.exit(1);
+  }
+
+  console.error(`[bon][${errorIdOrMessage}] ${message}`);
   process.exit(1);
 }
 
@@ -44,7 +49,7 @@ function normalizeLanguage(value) {
   if (!value) return 'python';
   const normalized = value.toLowerCase();
   if (!SUPPORTED_LANGS.has(normalized)) {
-    fail(`Unsupported language: ${value}. Use one of python|js|ts|rust.`);
+    fail('E_LANG_UNSUPPORTED', `Unsupported language: ${value}. Use one of python|js|ts|rust.`);
   }
 
   if (normalized === 'javascript') return 'js';
@@ -56,7 +61,7 @@ function normalizeEditor(value) {
   if (!value) return 'codex';
   const normalized = value.toLowerCase();
   if (!SUPPORTED_EDITORS.has(normalized)) {
-    fail(`Unsupported editor: ${value}. Use one of codex|cursor|claudecode|copilot.`);
+    fail('E_EDITOR_UNSUPPORTED', `Unsupported editor: ${value}. Use one of codex|cursor|claudecode|copilot.`);
   }
   return normalized;
 }
@@ -88,7 +93,7 @@ function parseArgs(argv) {
       case '--dir': {
         const next = argv[i + 1];
         if (!next) {
-          fail('Missing value for --dir');
+          fail('E_ARG_MISSING', 'Missing value for --dir');
         }
         options.dir = path.resolve(options.dir, next);
         i += 1;
@@ -100,14 +105,14 @@ function parseArgs(argv) {
         break;
       case '--lang': {
         const next = argv[i + 1];
-        if (!next) fail('Missing value for --lang');
+        if (!next) fail('E_ARG_MISSING', 'Missing value for --lang');
         options.lang = normalizeLanguage(next);
         i += 1;
         break;
       }
       case '--editor': {
         const next = argv[i + 1];
-        if (!next) fail('Missing value for --editor');
+        if (!next) fail('E_ARG_MISSING', 'Missing value for --editor');
         options.editor = normalizeEditor(next);
         i += 1;
         break;
@@ -283,7 +288,16 @@ function createLeanTemplate({ projectName, language, editor, locale }) {
   const displayLang = langDisplayName(language);
   const displayEditor = editorDisplayName(editor);
 
-  const heading = locale === 'ja' ? '# AGENTS (共通テンプレート / Lean)' : '# AGENTS (Shared Template / Lean)';
+  const heading = (() => {
+    switch (editor) {
+      case 'cursor':
+        return '# Cursor Rules (Lean)';
+      case 'copilot':
+        return '# Copilot Instructions (Lean)';
+      default:
+        return locale === 'ja' ? '# AGENTS (共通テンプレート / Lean)' : '# AGENTS (Shared Template / Lean)';
+    }
+  })();
 
   const intro =
     locale === 'ja'
@@ -409,6 +423,36 @@ function createLeanTemplate({ projectName, language, editor, locale }) {
       ? `## 対応エディタ\n- ターゲット: ${displayEditor}\n- 他のエディタ指定時は CLI オプション \`--editor\` を使用`
       : `## Target Editor\n- Target: ${displayEditor}\n- Use \`--editor\` to choose another editor`;
 
+  const placementSection = (() => {
+    if (editor === 'cursor') {
+      return locale === 'ja'
+        ? [
+            '## 配置（推奨）',
+            '- このファイルはリポジトリ直下に置く（例: `./.cursorrules`）'
+          ].join('\n')
+        : [
+            '## Placement (Recommended)',
+            '- Keep this file at the repository root (e.g., `./.cursorrules`)'
+          ].join('\n');
+    }
+
+    if (editor === 'copilot') {
+      return locale === 'ja'
+        ? [
+            '## 配置（推奨）',
+            '- まずは生成された場所（例: `./copilot-instructions.md`）で運用する',
+            '- もし運用で必要なら `.github/` 配下へ移動する（例: `./.github/copilot-instructions.md`）'
+          ].join('\n')
+        : [
+            '## Placement (Recommended)',
+            '- Start with the generated location (e.g., `./copilot-instructions.md`)',
+            '- If needed for your workflow, move it under `.github/` (e.g., `./.github/copilot-instructions.md`)'
+          ].join('\n');
+    }
+
+    return '';
+  })();
+
   const examples =
     locale === 'ja'
       ? [
@@ -427,7 +471,7 @@ function createLeanTemplate({ projectName, language, editor, locale }) {
       ? ['## 詳細は OVERVIEW を正とする', '`docs/OVERVIEW.md` を参照する。'].join('\n')
       : ['## Canonical Details Live in OVERVIEW', 'See `docs/OVERVIEW.md`.'].join('\n');
 
-  return [
+  const sections = [
     heading,
     '',
     intro,
@@ -444,12 +488,15 @@ function createLeanTemplate({ projectName, language, editor, locale }) {
     '',
     languageSection,
     '',
-    editorSection,
-    '',
-    examples,
-    '',
-    details
-  ].join('\n');
+    editorSection
+  ];
+
+  if (placementSection) {
+    sections.push('', placementSection);
+  }
+
+  sections.push('', examples, '', details);
+  return sections.join('\n');
 }
 
 function createOverviewTemplate(locale) {
@@ -541,7 +588,7 @@ function ensureOverviewFile(targetDir, locale) {
   try {
     fs.mkdirSync(docsDir, { recursive: true });
   } catch (error) {
-    fail(`Could not create docs directory: ${error.message}`);
+    fail('E_IO_DIR_CREATE', `Could not create docs directory: ${error.message}`);
   }
 
   if (fs.existsSync(overviewPath)) {
@@ -552,8 +599,64 @@ function ensureOverviewFile(targetDir, locale) {
   try {
     fs.writeFileSync(overviewPath, content, 'utf8');
   } catch (error) {
-    fail(`Failed to write docs/OVERVIEW.md: ${error.message}`);
+    fail('E_IO_WRITE', `Failed to write docs/OVERVIEW.md: ${error.message}`);
   }
+}
+
+function createDocStub(relativePath, locale) {
+  const title = path.basename(relativePath);
+  if (locale === 'ja') {
+    switch (relativePath) {
+      case 'docs/concept.md':
+        return ['# コンセプト', '', '入口は `docs/OVERVIEW.md`。ここには機能一覧（Spec ID）とフェーズをまとめる。'].join('\n');
+      case 'docs/spec.md':
+        return ['# 仕様', '', '入口は `docs/OVERVIEW.md`。Given/When/Then（前提/条件/振る舞い）で番号付きに整理する。'].join('\n');
+      case 'docs/architecture.md':
+        return ['# アーキテクチャ', '', '入口は `docs/OVERVIEW.md`。レイヤー責務・依存方向・主要I/Fを明文化する。'].join('\n');
+      case 'docs/plan.md':
+        return ['# Plan (NOW)', '', '- [ ] NOW のチェックリストをここに置く（完了/履歴は別へ）'].join('\n');
+      default:
+        return `# ${title}\n`;
+    }
+  }
+
+  switch (relativePath) {
+    case 'docs/concept.md':
+      return ['# Concept', '', 'Entry point is `docs/OVERVIEW.md`. Keep a feature list (Spec IDs) and phases here.'].join('\n');
+    case 'docs/spec.md':
+      return ['# Specification', '', 'Entry point is `docs/OVERVIEW.md`. Use numbered Given/When/Then specs.'].join('\n');
+    case 'docs/architecture.md':
+      return ['# Architecture', '', 'Entry point is `docs/OVERVIEW.md`. Define layers, dependency direction, and key interfaces.'].join('\n');
+    case 'docs/plan.md':
+      return ['# Plan (NOW)', '', '- [ ] Keep NOW-only checklist here (move done/history elsewhere)'].join('\n');
+    default:
+      return `# ${title}\n`;
+  }
+}
+
+function ensureDocFile(targetDir, relativePath, locale) {
+  const fullPath = path.join(targetDir, relativePath);
+  if (fs.existsSync(fullPath)) return;
+
+  const dirPath = path.dirname(fullPath);
+  try {
+    fs.mkdirSync(dirPath, { recursive: true });
+  } catch (error) {
+    fail('E_IO_DIR_CREATE', `Could not create directory: ${error.message}`);
+  }
+
+  try {
+    fs.writeFileSync(fullPath, createDocStub(relativePath, locale) + '\n', 'utf8');
+  } catch (error) {
+    fail('E_IO_WRITE', `Failed to write ${relativePath}: ${error.message}`);
+  }
+}
+
+function ensureDocsSkeleton(targetDir, locale) {
+  ensureDocFile(targetDir, 'docs/concept.md', locale);
+  ensureDocFile(targetDir, 'docs/spec.md', locale);
+  ensureDocFile(targetDir, 'docs/architecture.md', locale);
+  ensureDocFile(targetDir, 'docs/plan.md', locale);
 }
 
 function createTemplate({ projectName, language, editor, locale }) {
@@ -710,14 +813,15 @@ function main() {
   try {
     fs.mkdirSync(targetDir, { recursive: true });
   } catch (error) {
-    fail(`Could not create directory: ${error.message}`);
+    fail('E_IO_DIR_CREATE', `Could not create directory: ${error.message}`);
   }
 
   if (fs.existsSync(targetPath) && !force) {
-    fail(`${fileName} already exists at ${targetPath}. Use --force to overwrite.`);
+    fail('E_FILE_EXISTS', `${fileName} already exists at ${targetPath}. Use --force to overwrite.`);
   }
 
   ensureOverviewFile(targetDir, locale);
+  ensureDocsSkeleton(targetDir, locale);
 
   const template = createLeanTemplate({
     projectName: path.basename(targetDir) || 'project',
@@ -729,7 +833,7 @@ function main() {
   try {
     fs.writeFileSync(targetPath, template, 'utf8');
   } catch (error) {
-    fail(`Failed to write ${fileName}: ${error.message}`);
+    fail('E_IO_WRITE', `Failed to write ${fileName}: ${error.message}`);
   }
 
   console.log(`[bon] ${fileName} created at ${targetPath}`);

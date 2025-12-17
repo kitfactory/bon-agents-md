@@ -118,6 +118,10 @@ test('CLI creates AGENTS.md and blocks overwrite without --force', () => {
   const target = path.join(dir, bon.targetFileName('codex'));
   assert.ok(fs.existsSync(target), 'AGENTS file should be created');
   assert.ok(fs.existsSync(path.join(dir, 'docs', 'OVERVIEW.md')), 'docs/OVERVIEW.md should be created');
+  assert.ok(fs.existsSync(path.join(dir, 'docs', 'concept.md')), 'docs/concept.md should be created');
+  assert.ok(fs.existsSync(path.join(dir, 'docs', 'spec.md')), 'docs/spec.md should be created');
+  assert.ok(fs.existsSync(path.join(dir, 'docs', 'architecture.md')), 'docs/architecture.md should be created');
+  assert.ok(fs.existsSync(path.join(dir, 'docs', 'plan.md')), 'docs/plan.md should be created');
 
   const second = spawnSync('node', [script, '--dir', dir], { encoding: 'utf8' });
   assert.notStrictEqual(second.status, 0, 'Second run without --force should fail');

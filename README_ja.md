@@ -23,7 +23,7 @@
 
 ### 2. concept/spec/architecture/plan が一貫した「型」になる
 - `docs/OVERVIEW.md` を生成し（無ければ作成）、運用の入口とリンク集を用意
-- `docs/concept.md` / `docs/spec.md` / `docs/architecture.md` / `docs/plan.md` は「こう書く/こう運用する」をガイドし、プロジェクト固有内容はあなたが管理
+- `docs/concept.md` / `docs/spec.md` / `docs/architecture.md` / `docs/plan.md` は無ければ最小テンプレを作成し、プロジェクト固有内容はあなたが管理
 - すべて **Spec ID** で連携されるので、
   - 機能 → 仕様 → 実装レイヤー → 開発計画  
   がトレースしやすくなります。
@@ -34,7 +34,7 @@
   → 「どの条件でどう動くか」を AI にも人にも誤解させにくい
 - Architecture はレイヤー責務と主要 I/F を明示し、  
   **ゴッド API / ゴッドデータ** を避ける指針を含めます。
-- エラーは Error ID（例: `[bon][E2] ...`）付きで固定し、  
+- エラーは Error ID（例: `[bon][E_EDITOR_UNSUPPORTED] ...`）付きで固定し、  
   ログ・メッセージの表現が AI に壊されにくくなります。
 
 ### 4. サンプルが短くハッキリしていて、期待値を合わせやすい

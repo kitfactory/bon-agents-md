@@ -56,7 +56,7 @@ bon --version           # show version
 ### Project docs (`docs/`)
 - `docs/OVERVIEW.md` (created if missing)
   - Single entrypoint: current status + scope + links + operating rules
-- You own the rest (project-specific):
+- Minimal stubs are also created if missing (you fill in project specifics):
   - `docs/concept.md`, `docs/spec.md`, `docs/architecture.md`, `docs/plan.md`
 
 ---
@@ -66,7 +66,7 @@ bon --version           # show version
 - Docs-first: AGENTS is lean and points to `docs/OVERVIEW.md`; project specifics live under `docs/`.
 - Concept: Spec ID feature table with dependencies/phases; get agreement when created/updated.
 - Spec: Spec IDs in headings; Given / When / Then; validation and errors numbered, with an error/message list.
-- Architecture: Layers + interfaces spelled out; no god API/data; logging/error format (e.g., `[bon][E1] ...`).
+- Architecture: Layers + interfaces spelled out; no god API/data; fixed error format (e.g., `[bon][E_EDITOR_UNSUPPORTED] ...`).
 - Plan: Phase checklists; get agreement when the plan is done.
 - Samples/snippets: one-line success + one-line failure with Error IDs matching implementation.
 - `.env`: no `.env.sample`; AGENTS tells required keys and where they’re used.
