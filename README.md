@@ -59,6 +59,12 @@ bon --version           # show version
 - Minimal stubs are also created if missing (you fill in project specifics):
   - `docs/concept.md`, `docs/spec.md`, `docs/architecture.md`, `docs/plan.md`
 
+### Project-local skills
+bon copies bundled skills into the project (no global install), based on the target editor:
+- codex / claudecode: `./.codex/skills`
+- cursor: `./.cursor/skills`
+- copilot: `./.github/copilot/skills`
+
 ---
 
 ## Template guidance 🎯
@@ -67,7 +73,7 @@ bon --version           # show version
 - Concept: Spec ID feature table with dependencies/phases; get agreement when created/updated.
 - Spec: Spec IDs in headings; Given / When / Then; validation and errors numbered, with an error/message list.
 - Architecture: Layers + interfaces spelled out; no god API/data; fixed error format (e.g., `[bon][E_EDITOR_UNSUPPORTED] ...`).
-- Plan: Phase checklists; get agreement when the plan is done.
+- Plan: current/future/archive; current is a checklist; get agreement when the plan is done.
 - Samples/snippets: one-line success + one-line failure with Error IDs matching implementation.
 - `.env`: no `.env.sample`; AGENTS tells required keys and where they’re used.
 

@@ -8,13 +8,14 @@
 - 現在フェーズ: P1（MVP）
 - 今回スコープ（1〜5行）:
   - `bon` CLI のテンプレート生成と出力の見直し（AGENTS + OVERVIEW）
+  - スキルのプロジェクト内コピー（エディタ別配置）
 - 非ゴール（やらないこと）:
   - 生成物にプロジェクト固有情報を書き込む（例: 具体的な要件/秘密情報/環境依存の値）
 - 重要リンク:
   - concept: `./concept.md`
   - spec: `./spec.md`
   - architecture: `./architecture.md`
-  - plan (NOW): `./plan.md`
+  - plan: `./plan.md`
 
 ---
 
@@ -52,9 +53,9 @@
     - 主要仕様の Given/When/Then（前提/条件/振る舞い）が揃っている
     - 依存方向/I-F/エラー方針が明記されている
 - **G2: Project Plan Review**
-  - 更新対象: `docs/plan.md`（NOW）
+  - 更新対象: `docs/plan.md`（current/future/archive）
   - DoD:
-    - plan(NOW) が spec をカバーしている
+    - plan(current) が spec をカバーしている
     - 出口/DoD が明確
 
 #### フェーズレベル（Phase Gates：フェーズ運用時のみ）
@@ -86,4 +87,3 @@
 - Spec ID / Error ID の変更、互換性に影響する仕様変更
 - API/データモデルの形を変える設計変更
 - セキュリティ/重大バグ修正で挙動が変わるもの
-

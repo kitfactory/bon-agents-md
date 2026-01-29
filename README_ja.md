@@ -27,6 +27,7 @@
 - すべて **Spec ID** で連携されるので、
   - 機能 → 仕様 → 実装レイヤー → 開発計画  
   がトレースしやすくなります。
+- plan は current / future / archive で管理します。
 - 人間どうしの合意ポイントも明示されるため、レビューや相談がしやすくなります。
 
 ### 3. AI に渡しても「暴走しにくい」設計ノウハウをビルトイン
@@ -87,6 +88,12 @@ bon --version           # バージョン表示
   - 入口（現在地・スコープ・重要リンク・運用ルール）
 - それ以外（プロジェクト固有の正本）はあなたが用意:
   - `docs/concept.md` / `docs/spec.md` / `docs/architecture.md` / `docs/plan.md`
+
+### プロジェクト内スキル配置
+bon はスキルを**プロジェクト内**にコピーします（グローバルには入れません）:
+- codex / claudecode: `./.codex/skills`
+- cursor: `./.cursor/skills`
+- copilot: `./.github/copilot/skills`
 
 ---
 

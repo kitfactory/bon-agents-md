@@ -319,7 +319,7 @@ function createLeanTemplate({ projectName, language, editor, locale }) {
           '1. **入口は `docs/OVERVIEW.md`**（全体像・現在地・リンク集）。作業前後で必ず確認/更新する。',
           '2. **正本（Canonical）は `docs/`**。迷ったらまず正本を更新する（フェーズ運用は任意・適用条件あり）。',
           '3. **レビューゲートで必ず停止**：自己レビュー → 完成と判断できたらユーザー確認 → 合意で次へ。',
-          '4. **`docs/plan.md` は NOW のみ**（いまやるチェックリスト＋リンク）。完了/履歴は別へ逃がす。',
+          '4. **`docs/plan.md` は current / future / archive で管理**（current はチェックリスト、future は粗い計画、archive は完了）。',
           '5. **大きい変更は “提案→合意→適用”**（構成変更、ID変更、大量削除、互換影響など）。'
         ].join('\n')
       : [
@@ -327,7 +327,7 @@ function createLeanTemplate({ projectName, language, editor, locale }) {
           '1. **Single entrypoint is `docs/OVERVIEW.md`** (status, scope, links). Check/update it before and after work.',
           '2. **Canonical is `docs/`**. When in doubt, update canonical first (phases are optional; only when conditions apply).',
           '3. **Stop at review gates**: self-review → ask user to confirm when “done” → proceed only with agreement.',
-          '4. **`docs/plan.md` is NOW-only** (checklist + links). Move done/history elsewhere.',
+          '4. **`docs/plan.md` uses current / future / archive** (current = checklist, future = rough plan, archive = done).',
           '5. **Large changes require “propose → agree → apply”** (restructure, ID changes, large deletions, compatibility impact).'
         ].join('\n');
 
@@ -359,7 +359,7 @@ function createLeanTemplate({ projectName, language, editor, locale }) {
           '1) `docs/OVERVIEW.md`：現在フェーズ / 今回スコープ / 参照リンクを確認',
           '2) `docs/concept.md`：対象 Spec ID と範囲を確認',
           '3) `docs/spec.md`：該当章へ移動（必要なら分割する）',
-          '4) `docs/plan.md`：NOW チェックリストと詳細リンクを確認',
+          '4) `docs/plan.md`：current チェックリストと詳細リンクを確認',
           '5) （任意）フェーズ運用時のみ `docs/phases/<PHASE>/` を確認'
         ].join('\n')
       : [
@@ -367,7 +367,7 @@ function createLeanTemplate({ projectName, language, editor, locale }) {
           '1) `docs/OVERVIEW.md`: confirm current phase/scope/links',
           '2) `docs/concept.md`: confirm target Spec IDs and scope',
           '3) `docs/spec.md`: jump to the relevant section (split when needed)',
-          '4) `docs/plan.md`: confirm NOW checklist and links',
+          '4) `docs/plan.md`: confirm the current checklist and links',
           '5) (Optional) If using phases, check `docs/phases/<PHASE>/`'
         ].join('\n');
 
@@ -518,7 +518,7 @@ function createOverviewTemplate(locale) {
       '  - concept: `./concept.md`',
       '  - spec: `./spec.md`',
       '  - architecture: `./architecture.md`',
-      '  - plan (NOW): `./plan.md`',
+      '  - plan: `./plan.md`',
       '',
       '---',
       '',
@@ -558,7 +558,7 @@ function createOverviewTemplate(locale) {
     '  - concept: `./concept.md`',
     '  - spec: `./spec.md`',
     '  - architecture: `./architecture.md`',
-    '  - plan (NOW): `./plan.md`',
+    '  - plan: `./plan.md`',
     '',
     '---',
     '',
@@ -614,7 +614,18 @@ function createDocStub(relativePath, locale) {
       case 'docs/architecture.md':
         return ['# アーキテクチャ', '', '入口は `docs/OVERVIEW.md`。レイヤー責務・依存方向・主要I/Fを明文化する。'].join('\n');
       case 'docs/plan.md':
-        return ['# Plan (NOW)', '', '- [ ] NOW のチェックリストをここに置く（完了/履歴は別へ）'].join('\n');
+        return [
+          '# plan.md（必ず書く：最新版）',
+          '',
+          '# current',
+          '- [ ] いまやるチェックリストをここに置く',
+          '',
+          '# future',
+          '- 将来計画を粗く列挙する',
+          '',
+          '# archive',
+          '- [x] 完了項目を記録する'
+        ].join('\n');
       default:
         return `# ${title}\n`;
     }
@@ -628,7 +639,18 @@ function createDocStub(relativePath, locale) {
     case 'docs/architecture.md':
       return ['# Architecture', '', 'Entry point is `docs/OVERVIEW.md`. Define layers, dependency direction, and key interfaces.'].join('\n');
     case 'docs/plan.md':
-      return ['# Plan (NOW)', '', '- [ ] Keep NOW-only checklist here (move done/history elsewhere)'].join('\n');
+      return [
+        '# plan.md (Current/Future/Archive)',
+        '',
+        '# current',
+        '- [ ] Keep the current checklist here',
+        '',
+        '# future',
+        '- Rough future plan items',
+        '',
+        '# archive',
+        '- [x] Completed items'
+      ].join('\n');
     default:
       return `# ${title}\n`;
   }
@@ -657,6 +679,68 @@ function ensureDocsSkeleton(targetDir, locale) {
   ensureDocFile(targetDir, 'docs/spec.md', locale);
   ensureDocFile(targetDir, 'docs/architecture.md', locale);
   ensureDocFile(targetDir, 'docs/plan.md', locale);
+}
+
+function resolveSkillSourceDir() {
+  return path.join(__dirname, '..', 'skills');
+}
+
+function resolveSkillTargetDir(targetDir, editor) {
+  switch (editor) {
+    case 'codex':
+    case 'claudecode':
+      return path.join(targetDir, '.codex', 'skills');
+    case 'cursor':
+      return path.join(targetDir, '.cursor', 'skills');
+    case 'copilot':
+      return path.join(targetDir, '.github', 'copilot', 'skills');
+    default:
+      return path.join(targetDir, 'skills');
+  }
+}
+
+function copyDirRecursive(srcDir, destDir, options = {}) {
+  const { force = false } = options;
+  const result = { copied: 0, skipped: 0 };
+
+  fs.mkdirSync(destDir, { recursive: true });
+
+  for (const entry of fs.readdirSync(srcDir, { withFileTypes: true })) {
+    const srcPath = path.join(srcDir, entry.name);
+    const destPath = path.join(destDir, entry.name);
+
+    if (entry.isDirectory()) {
+      const nested = copyDirRecursive(srcPath, destPath, options);
+      result.copied += nested.copied;
+      result.skipped += nested.skipped;
+      continue;
+    }
+
+    if (fs.existsSync(destPath) && !force) {
+      result.skipped += 1;
+      continue;
+    }
+
+    fs.copyFileSync(srcPath, destPath);
+    result.copied += 1;
+  }
+
+  return result;
+}
+
+function copySkills(targetDir, editor, force) {
+  const sourceDir = resolveSkillSourceDir();
+  if (!fs.existsSync(sourceDir)) return null;
+
+  const targetSkillDir = resolveSkillTargetDir(targetDir, editor);
+  try {
+    const result = copyDirRecursive(sourceDir, targetSkillDir, { force });
+    return { targetSkillDir, ...result };
+  } catch (error) {
+    fail('E_IO_COPY', `Failed to copy skills: ${error.message}`);
+  }
+
+  return null;
 }
 
 function createTemplate({ projectName, language, editor, locale }) {
@@ -822,6 +906,7 @@ function main() {
 
   ensureOverviewFile(targetDir, locale);
   ensureDocsSkeleton(targetDir, locale);
+  const skillCopyResult = copySkills(targetDir, editor, force);
 
   const template = createLeanTemplate({
     projectName: path.basename(targetDir) || 'project',
@@ -841,6 +926,9 @@ function main() {
   if (fs.existsSync(overviewPath)) {
     console.log(`[bon] docs/OVERVIEW.md ready at ${overviewPath}`);
   }
+  if (skillCopyResult) {
+    console.log(`[bon] skills copied to ${skillCopyResult.targetSkillDir} (copied: ${skillCopyResult.copied}, skipped: ${skillCopyResult.skipped})`);
+  }
 }
 
 if (require.main === module) {
@@ -858,5 +946,6 @@ module.exports = {
   targetFileName,
   languageGuidance,
   ensureOverviewFile,
-  readWindowsLocale
+  readWindowsLocale,
+  resolveSkillTargetDir
 };
